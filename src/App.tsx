@@ -1,60 +1,31 @@
 import { useEffect, useState } from 'react';
-import { ArrowDown, ArrowUpRight, Heart, Menu, Search, ShoppingBag, X } from 'lucide-react';
-import { products } from './data';
+import { ArrowDown, ArrowUpRight, Heart, Menu, Search, ShoppingBag, UserRound, X, Minus, Plus, Trash2 } from 'lucide-react';
+import { products, type Product } from './data';
+import { StoreProvider, useStore } from './store';
 
-const nav = ['Shop','Collections','Journal','About'];
+const nav=['Shop','Collections','Journal','About'];
 
-function Header({ onMenu }: { onMenu: () => void }) {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => { const fn=()=>setScrolled(window.scrollY>40); window.addEventListener('scroll',fn,{passive:true}); fn(); return()=>window.removeEventListener('scroll',fn); },[]);
-  return <header className={'site-header '+(scrolled?'is-scrolled':'')}>
-    <a className="wordmark" href="#top" aria-label="NOIRÉ home">NOIRÉ</a>
-    <nav className="desktop-nav">{nav.map(x=><a href={'#'+x.toLowerCase()} key={x}>{x}</a>)}</nav>
-    <div className="header-actions">
-      <button aria-label="Search"><Search size={16}/></button><button aria-label="Wishlist"><Heart size={16}/></button>
-      <button aria-label="Cart" className="cart-button"><ShoppingBag size={16}/><span>0</span></button>
-    </div>
-    <button className="mobile-menu" onClick={onMenu} aria-label="Open menu"><Menu size={21}/></button>
-  </header>
+function Header({onMenu,onSearch,onCart}:{onMenu:()=>void;onSearch:()=>void;onCart:()=>void}){
+ const [scrolled,setScrolled]=useState(false); const {cartCount,wishlist}=useStore();
+ useEffect(()=>{const fn=()=>setScrolled(window.scrollY>40);window.addEventListener('scroll',fn,{passive:true});fn();return()=>window.removeEventListener('scroll',fn)},[]);
+ return <header className={'site-header '+(scrolled?'is-scrolled':'')}>
+  <a className="wordmark" href="#top" aria-label="NOIRÉ home">NOIRÉ</a><nav className="desktop-nav">{nav.map(x=><a href={'#'+x.toLowerCase()} key={x}>{x}</a>)}</nav>
+  <div className="header-actions"><button onClick={onSearch} aria-label="Search"><Search size={16}/></button><button onClick={()=>document.getElementById('shop')?.scrollIntoView()} aria-label="Wishlist"><Heart size={16}/>{wishlist.length>0&&<span>{wishlist.length}</span>}</button><button aria-label="Account"><UserRound size={16}/></button><button onClick={onCart} aria-label="Cart" className="cart-button"><ShoppingBag size={16}/><span>{cartCount}</span></button></div>
+  <button className="mobile-menu" onClick={onMenu} aria-label="Open menu"><Menu size={21}/></button>
+ </header>
 }
 
-function MobileNav({ close }: { close: () => void }) {
-  return <div className="mobile-overlay"><div className="mobile-top"><span className="wordmark">NOIRÉ</span><button onClick={close} aria-label="Close menu"><X size={23}/></button></div>
-    <nav>{nav.map((x,i)=><a key={x} href={'#'+x.toLowerCase()} onClick={close}><span>0{i+1}</span>{x}<ArrowUpRight size={18}/></a>)}</nav>
-    <p>Paris · London · Everywhere</p>
-  </div>
-}
+function MobileNav({close,onSearch,onCart}:{close:()=>void;onSearch:()=>void;onCart:()=>void}){return <div className="mobile-overlay"><div className="mobile-top"><span className="wordmark">NOIRÉ</span><button onClick={close} aria-label="Close menu"><X size={23}/></button></div><nav>{nav.map((x,i)=><a key={x} href={'#'+x.toLowerCase()} onClick={close}><span>0{i+1}</span>{x}<ArrowUpRight size={18}/></a>)}</nav><div className="mobile-tools"><button onClick={()=>{close();onSearch()}}><Search size={16}/> Search</button><button onClick={()=>{close();onCart()}}><ShoppingBag size={16}/> Bag</button></div><p>Paris · London · Everywhere</p></div>}
 
-function Hero() {
-  return <section className="hero" id="top">
-    <div className="hero-media"><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=2400&q=90" alt="NOIRÉ editorial fashion campaign"/></div><div className="hero-shade"/>
-    <div className="hero-content"><p className="eyebrow light reveal">AUTUMN / WINTER 2026</p><h1 className="reveal delay-1">Quietly<br/><em>Unforgettable.</em></h1><p className="hero-copy reveal delay-2">A study in silhouette, texture and the spaces between. Designed in Paris, made for everywhere.</p>
-      <div className="hero-actions reveal delay-3"><a className="button button-light" href="#shop">Shop Collection <ArrowUpRight size={15}/></a><a className="text-link light" href="#story">Explore <ArrowDown size={14}/></a></div>
-    </div>
-    <div className="hero-meta"><span>01</span><i/><span>04</span></div><a className="scroll-cue" href="#collections"><i/> Scroll to discover</a>
-  </section>
-}
+function Hero(){return <section className="hero" id="top"><div className="hero-media"><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=2400&q=90" alt="NOIRÉ editorial fashion campaign"/></div><div className="hero-shade"/><div className="hero-content"><p className="eyebrow light reveal">AUTUMN / WINTER 2026</p><h1 className="reveal delay-1">Quietly<br/><em>Unforgettable.</em></h1><p className="hero-copy reveal delay-2">A study in silhouette, texture and the spaces between. Designed in Paris, made for everywhere.</p><div className="hero-actions reveal delay-3"><a className="button button-light" href="#shop">Shop Collection <ArrowUpRight size={15}/></a><a className="text-link light" href="#story">Explore <ArrowDown size={14}/></a></div></div><div className="hero-meta"><span>01</span><i/><span>04</span></div><a className="scroll-cue" href="#collections"><i/> Scroll to discover</a></section>}
 
-function SectionHeading({ index, eyebrow, title, italic, action }: {index:string;eyebrow:string;title:string;italic:string;action?:string}) {
-  return <div className="section-head"><div><p className="eyebrow">{index} / {eyebrow}</p><h2>{title}<br/><em>{italic}</em></h2></div>{action&&<a className="text-link" href="#shop">{action} <ArrowUpRight size={14}/></a>}</div>
-}
+function SectionHeading({index,eyebrow,title,italic,action}:{index:string;eyebrow:string;title:string;italic:string;action?:string}){return <div className="section-head"><div><p className="eyebrow">{index} / {eyebrow}</p><h2>{title}<br/><em>{italic}</em></h2></div>{action&&<a className="text-link" href="#shop">{action} <ArrowUpRight size={14}/></a>}</div>}
 
-function Featured() {
-  return <section className="section featured" id="collections"><SectionHeading index="01" eyebrow="COLLECTION" title="The art of" italic="restraint." action="View collection"/>
-    <div className="feature-grid"><article className="image-card feature-main"><img src="https://images.unsplash.com/photo-1506629905607-d9a1d6a9b6f3?auto=format&fit=crop&w=1600&q=90" alt="NOIRÉ campaign portrait"/><div className="image-caption"><span>Look 01</span><strong>The New Uniform</strong><ArrowUpRight size={17}/></div></article>
-      <article className="image-card feature-side"><img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1100&q=90" alt="Sculpted wool coat editorial"/><div className="image-caption"><span>Look 04</span><strong>Architectural Wool</strong><ArrowUpRight size={17}/></div></article></div>
-  </section>
-}
+function Featured(){return <section className="section featured" id="collections"><SectionHeading index="01" eyebrow="COLLECTION" title="The art of" italic="restraint." action="View collection"/><div className="feature-grid"><article className="image-card feature-main"><img src="https://images.unsplash.com/photo-1506629905607-d9a1d6a9b6f3?auto=format&fit=crop&w=1600&q=90" alt="NOIRÉ campaign portrait"/><div className="image-caption"><span>Look 01</span><strong>The New Uniform</strong><ArrowUpRight size={17}/></div></article><article className="image-card feature-side"><img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1100&q=90" alt="Sculpted wool coat editorial"/><div className="image-caption"><span>Look 04</span><strong>Architectural Wool</strong><ArrowUpRight size={17}/></div></article></div></section>}
 
-function ProductCard({ product }: { product: typeof products[number] }) {
-  const [liked,setLiked]=useState(false); const [added,setAdded]=useState(false);
-  return <article className="product-card"><div className="product-image"><img src={product.image} alt={product.alt}/>
-    <button className={'wish '+(liked?'active':'')} onClick={()=>setLiked(v=>!v)} aria-label={liked?'Remove from wishlist':'Add to wishlist'}><Heart size={17} fill={liked?'currentColor':'none'}/></button>
-    <button className={'quick-add '+(added?'added':'')} onClick={()=>setAdded(v=>!v)}>{added?'Added to bag':'Quick add'} <ArrowUpRight size={14}/></button>
-  </div><div className="product-info"><div><h3>{product.name}</h3><p>{product.category}</p></div><strong>{product.price}</strong></div></article>
-}
+function ProductCard({product}:{product:Product}){const {addToCart,toggleWishlist,isWishlist}=useStore();const liked=isWishlist(product.id);return <article className="product-card"><div className="product-image"><img src={product.image} alt={product.alt}/><button className={'wish '+(liked?'active':'')} onClick={()=>toggleWishlist(product.id)} aria-label={liked?'Remove from wishlist':'Add to wishlist'}><Heart size={17} fill={liked?'currentColor':'none'}/></button><button className="quick-add" onClick={()=>addToCart(product)}>Quick add <ArrowUpRight size={14}/></button></div><div className="product-info"><div><h3>{product.name}</h3><p>{product.category}</p></div><strong>{product.price}</strong></div></article>}
 
-function NewArrivals(){return <section className="section arrivals" id="shop"><SectionHeading index="02" eyebrow="NEW ARRIVALS" title="Now," italic="in focus."/><p className="section-note">Six considered pieces from the latest NOIRÉ collection.</p><div className="product-grid">{products.map(p=><ProductCard key={p.id} product={p}/>)}</div></section>}
+function NewArrivals(){const [filter,setFilter]=useState('All');const cats=['All',...Array.from(new Set(products.map(p=>p.category)))];const visible=filter==='All'?products:products.filter(p=>p.category===filter);return <section className="section arrivals" id="shop"><SectionHeading index="02" eyebrow="NEW ARRIVALS" title="Now," italic="in focus."/><p className="section-note">Six considered pieces from the latest NOIRÉ collection.</p><div className="filter-bar" aria-label="Product categories">{cats.map(c=><button className={filter===c?'active':''} key={c} onClick={()=>setFilter(c)}>{c}</button>)}</div><div className="product-grid">{visible.map(p=><ProductCard key={p.id} product={p}/>)}</div></section>}
 
 function Story(){return <section className="story" id="about"><div className="story-image"><img src="https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?auto=format&fit=crop&w=1600&q=90" alt="NOIRÉ atelier detail"/></div><div className="story-copy" id="story"><p className="eyebrow">03 / THE HOUSE</p><h2>Made with<br/><em>intention.</em></h2><p>NOIRÉ is a modern house built around the belief that luxury begins with what we leave out. Every silhouette is reduced to its essential line, every material chosen for how it lives over time.</p><a className="text-link" href="#journal">Discover our story <ArrowUpRight size={14}/></a></div></section>}
 
@@ -64,4 +35,10 @@ function Newsletter(){const [sent,setSent]=useState(false);return <section class
 
 function Footer(){return <footer><div className="footer-top"><a className="wordmark" href="#top">NOIRÉ</a><p>A modern house for<br/>quietly remarkable things.</p><div className="footer-links"><div><span>SHOP</span><a href="#shop">New arrivals</a><a href="#collections">Collections</a><a href="#shop">Accessories</a></div><div><span>HOUSE</span><a href="#about">Our story</a><a href="#journal">Journal</a><a href="#about">Stockists</a></div><div><span>CARE</span><a href="#top">Shipping & returns</a><a href="#top">Contact</a><a href="#top">FAQ</a></div></div></div><div className="footer-bottom"><span>© 2026 NOIRÉ PARIS</span><div><a href="#top">Instagram</a><a href="#top">Pinterest</a><a href="#top">Legal</a></div><span>Made with intention.</span></div></footer>}
 
-export default function App(){const [menu,setMenu]=useState(false);useEffect(()=>{document.body.style.overflow=menu?'hidden':'';return()=>{document.body.style.overflow=''}},[menu]);return <><Header onMenu={()=>setMenu(true)}/>{menu&&<MobileNav close={()=>setMenu(false)}/>}<main><Hero/><Featured/><NewArrivals/><Story/><Editorial/><Newsletter/></main><Footer/></>}
+function SearchOverlay({close}:{close:()=>void}){const [q,setQ]=useState('');const results=products.filter(p=>(p.name+' '+p.category).toLowerCase().includes(q.toLowerCase())).slice(0,5);useEffect(()=>{const f=(e:KeyboardEvent)=>e.key==='Escape'&&close();window.addEventListener('keydown',f);return()=>window.removeEventListener('keydown',f)},[close]);return <div className="search-overlay"><div className="search-inner"><div className="search-top"><span className="eyebrow">SEARCH NOIRÉ</span><button onClick={close} aria-label="Close search"><X size={22}/></button></div><div className="search-input"><Search size={19}/><input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Search pieces, categories..." /></div><div className="search-results">{q&&results.map(p=><a href="#shop" onClick={close} key={p.id}><img src={p.image} alt=""/><span><strong>{p.name}</strong><small>{p.category} · {p.price}</small></span><ArrowUpRight size={16}/></a>)}{q&&!results.length&&<p>No pieces found. Try another search.</p>}</div></div></div>}
+
+function CartDrawer({close}:{close:()=>void}){const {cart,removeFromCart,changeQuantity,subtotal}=useStore();const pieces=cart.reduce((s,x)=>s+x.quantity,0);return <div className="cart-layer"><button className="cart-backdrop" onClick={close} aria-label="Close cart"/><aside className="cart-drawer"><div className="cart-head"><div><p className="eyebrow">YOUR BAG</p><h2>{cart.length?pieces+' pieces':'Your bag is empty'}</h2></div><button onClick={close} aria-label="Close cart"><X size={22}/></button></div>{cart.length?<><div className="cart-items">{cart.map(x=><div className="cart-item" key={x.product.id}><img src={x.product.image} alt={x.product.alt}/><div className="cart-item-info"><div><strong>{x.product.name}</strong><small>{x.product.category}</small></div><span>{x.product.price}</span><div className="quantity"><button onClick={()=>changeQuantity(x.product.id,-1)}><Minus size={12}/></button><b>{x.quantity}</b><button onClick={()=>changeQuantity(x.product.id,1)}><Plus size={12}/></button><button className="remove" onClick={()=>removeFromCart(x.product.id)} aria-label="Remove item"><Trash2 size={13}/></button></div></div></div>)}</div><div className="cart-foot"><div><span>Subtotal</span><strong>€{subtotal.toLocaleString('en-US')}</strong></div><button className="button cart-checkout">Checkout <ArrowUpRight size={15}/></button><small>Taxes and shipping calculated at checkout.</small></div></>:<div className="empty-cart"><ShoppingBag size={28}/><p>Nothing here yet.</p><a href="#shop" onClick={close} className="text-link">Discover the collection <ArrowUpRight size={14}/></a></div>}</aside></div>}
+
+function AppInner(){const [menu,setMenu]=useState(false),[search,setSearch]=useState(false),[cart,setCart]=useState(false);useEffect(()=>{document.body.style.overflow=menu||search||cart?'hidden':'';return()=>{document.body.style.overflow=''}},[menu,search,cart]);return <><Header onMenu={()=>setMenu(true)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)}/>{menu&&<MobileNav close={()=>setMenu(false)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)}/>} {search&&<SearchOverlay close={()=>setSearch(false)}/>} {cart&&<CartDrawer close={()=>setCart(false)}/>}<main><Hero/><Featured/><NewArrivals/><Story/><Editorial/><Newsletter/></main><Footer/></>}
+
+export default function App(){return <StoreProvider><AppInner/></StoreProvider>}
