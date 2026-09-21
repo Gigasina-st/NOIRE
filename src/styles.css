@@ -153,3 +153,27 @@ footer{padding:90px 7.5vw 28px}
  .editorial-content{left:6vw;bottom:8vh}
  .editorial-content h2{font-size:78px}
 }
+
+/* NOIRE / UI LEGIBILITY PASS */
+.desktop-nav a,.desktop-nav button,.header-actions button{font-size:11px;letter-spacing:.13em}
+.header-actions button span,.cart-button span{font-size:9px}
+.header-actions{gap:24px}
+.button{font-size:10px;letter-spacing:.13em}
+.text-link{font-size:10px;letter-spacing:.13em}
+.scroll-cue,.hero-meta{font-size:10px;letter-spacing:.14em}
+.eyebrow{font-size:10px;letter-spacing:.16em}
+.filter-bar button{font-size:10px;letter-spacing:.13em}
+.product-info p,.product-info strong{font-size:10px;letter-spacing:.11em}
+.quick-add{font-size:10px;letter-spacing:.13em}
+.collection-filters button,.collection-toolbar select{font-size:10px;letter-spacing:.13em}
+.mobile-tools button{font-size:10px}
+.footer-links span{font-size:10px}.footer-links a{font-size:10px}
+.footer-bottom{font-size:9px}
+.image-caption span{font-size:10px;letter-spacing:.13em}
+@media(max-width:560px){
+ .desktop-nav a,.desktop-nav button,.header-actions button{font-size:10px}
+ .button,.text-link{font-size:10px}
+ .filter-bar button{font-size:10px}
+ .product-info p,.product-info strong{font-size:9px}
+ .quick-add{font-size:9px}
+}
