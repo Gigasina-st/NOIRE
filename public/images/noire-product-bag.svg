@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 2000" role="img" aria-label="Atelier Leather Bag">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b0b0a"/><stop offset=".55" stop-color="#24221e"/><stop offset="1" stop-color="#080807"/></linearGradient>
+ <radialGradient id="glow"><stop offset="0" stop-color="#9b8c74" stop-opacity=".32"/><stop offset="1" stop-color="#9b8c74" stop-opacity="0"/></radialGradient>
+ <filter id="blur"><feGaussianBlur stdDeviation="70"/></filter>
+</defs>
+<rect width="1600" height="2000" fill="url(#bg)"/>
+<circle cx="1180" cy="540" r="430" fill="url(#glow)" filter="url(#blur)"/>
+<path d="M0 1540C360 1400 610 1640 980 1500s430-120 620-30v530H0Z" fill="#151411" opacity=".8"/>
+<path d="M470 760h660l95 760H375z" fill="#0b0b0a" stroke="#9b8c74" stroke-width="8"/><path d="M590 780c0-250 420-250 420 0" fill="none" stroke="#b0a18a" stroke-width="34"/><path d="M500 950h600" stroke="#3c3932" stroke-width="5"/>
+<g fill="#b7ad9d" font-family="Georgia,serif" text-anchor="middle"><text x="800" y="1820" font-size="52" letter-spacing="12">NOIRÉ</text><text x="800" y="1880" font-family="Arial,sans-serif" font-size="18" letter-spacing="6" opacity=".65">TEMPORARY VISUAL / 2026</text></g>
+</svg>
