@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useState } from 'react';
-import { LayoutDashboard, Package, ShoppingBag, Users, Mail, LogOut, Plus, Trash2, Save, X } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { LayoutDashboard, Package, ShoppingBag, Users, LogOut, Plus, Trash2, Save, X } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import type { DbOrder, DbProduct } from './lib/types';
 
