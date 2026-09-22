@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowUpRight, Check, Loader2, LockKeyhole, X } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useStore } from './store';
