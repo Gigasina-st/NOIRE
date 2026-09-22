@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowUpRight, Check, Loader2, LogOut, X } from 'lucide-react
 import { supabase } from './lib/supabase';
 
 type AccountProps={close:()=>void;onCheckout:()=>void};
+type Order={id:string;status:string;subtotal:number;currency:string;created_at:string;shipping_address:any};
 
 export default function Account({close,onCheckout}:AccountProps){
   const [session,setSession]=useState<any>(null);
@@ -12,7 +13,8 @@ export default function Account({close,onCheckout}:AccountProps){
   const [name,setName]=useState('');
   const [loading,setLoading]=useState(false);
   const [message,setMessage]=useState('');
-  const [orders,setOrders]=useState<any[]>([]);
+  const [orders,setOrders]=useState<Order[]>([]);
+  const [selected,setSelected]=useState<Order|null>(null);
 
   useEffect(()=>{
     let mounted=true;
@@ -23,7 +25,7 @@ export default function Account({close,onCheckout}:AccountProps){
 
   useEffect(()=>{
     if(!session?.user?.id){setOrders([]);return}
-    supabase.from('orders').select('id,status,subtotal,currency,created_at').eq('customer_id',session.user.id).order('created_at',{ascending:false}).then(({data})=>setOrders(data||[]));
+    supabase.from('orders').select('id,status,subtotal,currency,created_at,shipping_address').eq('customer_id',session.user.id).order('created_at',{ascending:false}).then(({data})=>setOrders((data||[]) as Order[]));
   },[session]);
 
   async function submit(e:FormEvent){
@@ -45,8 +47,9 @@ export default function Account({close,onCheckout}:AccountProps){
     {session?<div className="account-content">
       <div className="account-intro"><span>{session.user.email}</span><button onClick={signOut}><LogOut size={14}/> Sign out</button></div>
       <section className="account-section"><div className="account-section-head"><span>ORDER HISTORY</span><span>{orders.length} orders</span></div>
-        {orders.length?orders.map(o=><article className="account-order" key={o.id}><div><strong>Order #{o.id.slice(0,8).toUpperCase()}</strong><small>{new Date(o.created_at).toLocaleDateString()} · {o.status}</small></div><b>€{Number(o.subtotal).toLocaleString('en-US')}</b></article>):<p className="account-empty">Your first order will appear here.</p>}
+        {orders.length?orders.map(o=><button className="account-order" key={o.id} onClick={()=>setSelected(o)}><div><strong>Order #{o.id.slice(0,8).toUpperCase()}</strong><small>{new Date(o.created_at).toLocaleDateString()} · {o.status}</small></div><b>{o.currency||'EUR'} {Number(o.subtotal).toLocaleString('en-US')}</b></button>):<p className="account-empty">Your first order will appear here.</p>}
       </section>
+      {selected&&<div className="account-detail"><div className="account-detail-head"><div><span>ORDER #{selected.id.slice(0,8).toUpperCase()}</span><strong>{selected.status}</strong></div><button onClick={()=>setSelected(null)}><X size={16}/></button></div><p>{selected.shipping_address?.address}</p><small>{selected.shipping_address?.city} · {selected.shipping_address?.postalCode} · {selected.shipping_address?.country}</small></div>}
       <button className="button account-cta" onClick={()=>{close();onCheckout()}}>Continue shopping <ArrowUpRight size={15}/></button>
     </div>:<div className="account-content">
       <div className="auth-tabs"><button className={mode==='signin'?'active':''} onClick={()=>{setMode('signin');setMessage('')}}>Sign in</button><button className={mode==='signup'?'active':''} onClick={()=>{setMode('signup');setMessage('')}}>Create account</button></div>
