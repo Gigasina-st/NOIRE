@@ -72,8 +72,13 @@ create trigger orders_updated_at before update on public.orders
 for each row execute function public.set_updated_at();
 
 create or replace function public.is_admin()
-returns boolean language sql stable security definer set search_path = public
-as $$ select exists(select 1 from public.profiles where id = auth.uid() and role = 'admin') $$;
+returns boolean language sql stable security definer set search_path = ''
+as $
+  select exists(
+    select 1 from public.profiles
+    where id = (select auth.uid()) and role = 'admin'
+  )
+$;
 
 alter table public.profiles enable row level security;
 alter table public.products enable row level security;
@@ -111,7 +116,7 @@ for all using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "customers read own order items" on public.order_items;
 create policy "customers read own order items" on public.order_items
-for select using (exists(select 1 from public.orders o where o.id = order_id and o.customer_id = auth.uid()));
+for select using (exists(select 1 from public.orders o where o.id = order_id and o.customer_id = (select auth.uid())));
 
 drop policy if exists "public can subscribe" on public.newsletter_subscribers;
 create policy "public can subscribe" on public.newsletter_subscribers
@@ -133,7 +138,7 @@ create index if not exists order_items_order_id_idx on public.order_items (order
 drop policy if exists "customers create own orders" on public.orders;
 create policy "customers create own orders" on public.orders
 for insert to authenticated
-with check (customer_id = auth.uid());
+with check (customer_id = (select auth.uid()));
 
 -- Customers may create line items only for their own orders.
 drop policy if exists "customers create own order items" on public.order_items;
@@ -191,10 +196,11 @@ begin
   return v_order_id;
 end;
 $$;
-revoke execute on function public.create_order(jsonb,jsonb) from anon;
+revoke execute on function public.create_order(jsonb,jsonb) from public, anon;
 grant execute on function public.create_order(jsonb,jsonb) to authenticated;
 
 
--- RPC hardening: these helpers are internal to RLS/triggers, not public RPC endpoints.
-grant execute on function public.is_admin() to anon, authenticated;
-revoke execute on function public.handle_new_user() from anon, authenticated;
+-- RPC hardening: these helpers are internal to authenticated RLS checks, not public RPC endpoints.
+revoke execute on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
