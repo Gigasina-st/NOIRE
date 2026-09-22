@@ -169,20 +169,24 @@ begin
   for v_item in select * from jsonb_array_elements(p_items) loop
     v_product_id := (v_item->>'product_id')::uuid;
     v_quantity := greatest(1, coalesce((v_item->>'quantity')::integer, 0));
-    v_size := nullif(v_item->>'size',''); v_color := nullif(v_item->>'color','');
     select name, price, stock into v_name, v_price, v_stock from public.products where id=v_product_id and active=true for update;
     if not found then raise exception 'Product is unavailable'; end if;
     if v_stock < v_quantity then raise exception 'Insufficient stock for %', v_name; end if;
     v_subtotal := v_subtotal + (v_price * v_quantity);
   end loop;
   insert into public.orders(customer_id,email,status,subtotal,currency,shipping_address)
-  values(auth.uid(),coalesce(auth.jwt()->>'email',''),'pending',v_subtotal,'EUR',coalesce(p_shipping_address,'{}'::jsonb)) returning id into v_order_id;
+  values(auth.uid(),coalesce(auth.jwt()->>'email',''),'pending',v_subtotal,'EUR',coalesce(p_shipping_address,'{}'::jsonb))
+  returning id into v_order_id;
   for v_item in select * from jsonb_array_elements(p_items) loop
-    v_product_id := (v_item->>'product_id')::uuid; v_quantity := greatest(1,coalesce((v_item->>'quantity')::integer,0));
-    v_size := nullif(v_item->>'size',''); v_color := nullif(v_item->>'color','');
+    v_product_id := (v_item->>'product_id')::uuid;
+    v_quantity := greatest(1,coalesce((v_item->>'quantity')::integer,0));
+    v_size := nullif(v_item->>'size','');
+    v_color := nullif(v_item->>'color','');
     select name,price into v_name,v_price from public.products where id=v_product_id and active=true;
-    insert into public.order_items(order_id,product_id,product_name,quantity,unit_price,size,color) values(v_order_id,v_product_id,v_name,v_quantity,v_price,v_size,v_color);
-    update public.products set stock=stock-v_quantity where id=v_product_id;
+    update public.products set stock=stock-v_quantity where id=v_product_id and active=true and stock>=v_quantity returning stock into v_stock;
+    if not found then raise exception 'Insufficient stock for %', v_name; end if;
+    insert into public.order_items(order_id,product_id,product_name,quantity,unit_price,size,color)
+    values(v_order_id,v_product_id,v_name,v_quantity,v_price,v_size,v_color);
   end loop;
   return v_order_id;
 end;
