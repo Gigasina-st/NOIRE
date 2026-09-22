@@ -149,9 +149,9 @@ create or replace function public.create_order(
 )
 returns uuid
 language plpgsql
-security invoker
+security definer
 set search_path = public, pg_temp
-as $$
+as $
 declare
   v_order_id uuid;
   v_subtotal numeric := 0;
