@@ -84,7 +84,7 @@ function ProductPage({product,back}:{product:Product;back:()=>void}){
   const liked=isWishlist(product.id);
   const soldOut=product.stock!==undefined&&product.stock<=0;
   useDocumentMeta(product);
-  useEffect(()=>window.scrollTo({top:0,behavior:'instant'}),[product.id]);
+  useEffect(()=>window.scrollTo(0,0),[product.id]);
   return <main className="product-page">
     <div className="product-page-top">
       <button className="collection-close" onClick={back}><ArrowLeft size={17}/> Back to collection</button>
