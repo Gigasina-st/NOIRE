@@ -343,3 +343,22 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .product-page-description{font-size:11px}
   .product-page-note{margin-top:40px}
 }
+
+/* NOIRE / ORDER TRACKING */
+.order-tracking{margin-top:24px;border-top:1px solid var(--line);padding-top:18px}
+.tracking-head{display:flex;justify-content:space-between;gap:16px;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:20px}
+.tracking-head span:last-child{color:var(--ink)}
+.tracking-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tracking-step{position:relative;display:grid;gap:9px;justify-items:start;color:var(--muted);font-size:8px;letter-spacing:.08em;text-transform:uppercase}
+.tracking-step:before{content:"";position:absolute;top:9px;left:18px;right:-8px;height:1px;background:var(--line)}
+.tracking-step:last-child:before{display:none}
+.tracking-step i{position:relative;z-index:1;width:19px;height:19px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:8px;background:var(--paper)}
+.tracking-step.complete{color:var(--ink)}
+.tracking-step.complete i{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.tracking-step.complete:before{background:var(--ink)}
+.tracking-step.current span{font-weight:600}
+.order-tracking.cancelled{display:grid;gap:6px}
+.order-tracking.cancelled .tracking-label{font-size:8px;letter-spacing:.14em;color:var(--muted)}
+.order-tracking.cancelled strong{font:400 22px/1 'Cormorant Garamond',serif}
+.order-tracking.cancelled p{font-size:9px;line-height:1.7;color:var(--muted);margin:0}
+@media(max-width:560px){.tracking-steps{gap:3px}.tracking-step{font-size:7px}.tracking-step:before{left:15px;right:-5px}.tracking-step i{width:17px;height:17px;font-size:7px}}
