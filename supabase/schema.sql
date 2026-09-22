@@ -123,3 +123,20 @@ for select using (public.is_admin());
 
 -- After creating your first account, promote it:
 -- update public.profiles set role='admin' where id='YOUR_AUTH_USER_UUID';
+
+-- Performance indexes for storefront and customer order history.
+create index if not exists products_active_created_at_idx on public.products (active, created_at);
+create index if not exists orders_customer_created_at_idx on public.orders (customer_id, created_at desc);
+create index if not exists order_items_order_id_idx on public.order_items (order_id);
+
+-- Customers may create only orders belonging to their own authenticated account.
+drop policy if exists "customers create own orders" on public.orders;
+create policy "customers create own orders" on public.orders
+for insert to authenticated
+with check (customer_id = auth.uid());
+
+-- Customers may create line items only for their own orders.
+drop policy if exists "customers create own order items" on public.order_items;
+create policy "customers create own order items" on public.order_items
+for insert to authenticated
+with check (exists(select 1 from public.orders o where o.id = order_id and o.customer_id = auth.uid()));
