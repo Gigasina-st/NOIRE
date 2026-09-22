@@ -5,5 +5,5 @@ export type DbProduct = {
 };
 export type DbOrder = {
   id:string; email:string; status:'pending'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled';
-  subtotal:number; currency:string; created_at:string; updated_at:string;
+  subtotal:number; currency:string; shipping_address?:Record<string,unknown>; created_at:string; updated_at:string;
 };
