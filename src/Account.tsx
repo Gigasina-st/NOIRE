@@ -4,6 +4,14 @@ import { supabase } from './lib/supabase';
 
 type AccountProps={close:()=>void;onCheckout:()=>void};
 type Order={id:string;status:string;subtotal:number;currency:string;created_at:string;shipping_address:any};
+const trackingSteps=[['pending','Order placed'],['confirmed','Confirmed'],['processing','Preparing'],['shipped','Shipped'],['delivered','Delivered']] as const;
+function OrderTracking({status}:{status:string}){
+  if(status==='cancelled') return <div className="order-tracking cancelled"><span className="tracking-label">ORDER TRACKING</span><strong>Cancelled</strong><p>This order is no longer moving through fulfilment.</p></div>;
+  const current=Math.max(0,trackingSteps.findIndex(([key])=>key===status));
+  return <div className="order-tracking"><div className="tracking-head"><span>ORDER TRACKING</span><span>{trackingSteps[current]?.[1]}</span></div><div className="tracking-steps">{trackingSteps.map(([key,label],index)=><div className={'tracking-step '+(index<=current?'complete ':'')+(index===current?'current':'')} key={key}><i>{index<current?'✓':index+1}</i><span>{label}</span></div>)}</div></div>;
+}
+
+
 
 export default function Account({close,onCheckout}:AccountProps){
   const [session,setSession]=useState<any>(null);
@@ -49,7 +57,7 @@ export default function Account({close,onCheckout}:AccountProps){
       <section className="account-section"><div className="account-section-head"><span>ORDER HISTORY</span><span>{orders.length} orders</span></div>
         {orders.length?orders.map(o=><button className="account-order" key={o.id} onClick={()=>setSelected(o)}><div><strong>Order #{o.id.slice(0,8).toUpperCase()}</strong><small>{new Date(o.created_at).toLocaleDateString()} · {o.status}</small></div><b>{o.currency||'EUR'} {Number(o.subtotal).toLocaleString('en-US')}</b></button>):<p className="account-empty">Your first order will appear here.</p>}
       </section>
-      {selected&&<div className="account-detail"><div className="account-detail-head"><div><span>ORDER #{selected.id.slice(0,8).toUpperCase()}</span><strong>{selected.status}</strong></div><button onClick={()=>setSelected(null)}><X size={16}/></button></div><p>{selected.shipping_address?.address}</p><small>{selected.shipping_address?.city} · {selected.shipping_address?.postalCode} · {selected.shipping_address?.country}</small></div>}
+      {selected&&<div className="account-detail"><div className="account-detail-head"><div><span>ORDER #{selected.id.slice(0,8).toUpperCase()}</span><strong>{selected.status}</strong></div><button onClick={()=>setSelected(null)}><X size={16}/></button></div><p>{selected.shipping_address?.address}</p><small>{selected.shipping_address?.city} · {selected.shipping_address?.postalCode} · {selected.shipping_address?.country}</small><OrderTracking status={selected.status}/></div>}
       <button className="button account-cta" onClick={()=>{close();onCheckout()}}>Continue shopping <ArrowUpRight size={15}/></button>
     </div>:<div className="account-content">
       <div className="auth-tabs"><button className={mode==='signin'?'active':''} onClick={()=>{setMode('signin');setMessage('')}}>Sign in</button><button className={mode==='signup'?'active':''} onClick={()=>{setMode('signup');setMessage('')}}>Create account</button></div>
