@@ -196,5 +196,5 @@ grant execute on function public.create_order(jsonb,jsonb) to authenticated;
 
 
 -- RPC hardening: these helpers are internal to RLS/triggers, not public RPC endpoints.
-revoke execute on function public.is_admin() from anon, authenticated;
+grant execute on function public.is_admin() to anon, authenticated;
 revoke execute on function public.handle_new_user() from anon, authenticated;
