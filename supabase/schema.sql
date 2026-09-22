@@ -60,7 +60,7 @@ create table if not exists public.newsletter_subscribers (
 );
 
 create or replace function public.set_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql set search_path = public, pg_temp as $
 begin new.updated_at = now(); return new; end $$;
 
 drop trigger if exists products_updated_at on public.products;
@@ -193,3 +193,8 @@ end;
 $$;
 revoke execute on function public.create_order(jsonb,jsonb) from anon;
 grant execute on function public.create_order(jsonb,jsonb) to authenticated;
+
+
+-- RPC hardening: these helpers are internal to RLS/triggers, not public RPC endpoints.
+revoke execute on function public.is_admin() from anon, authenticated;
+revoke execute on function public.handle_new_user() from anon, authenticated;
