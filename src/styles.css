@@ -192,3 +192,54 @@ footer{padding:90px 7.5vw 28px}
 .stock-note{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:15px 0 4px}.stock-note:has(+ .selector){margin-bottom:6px}.modal-add:disabled{opacity:.45;cursor:not-allowed}.product-image img,.gallery-main img,.feature-grid img,.story-image img,.editorial>img{will-change:transform}.wishlist-item{cursor:pointer;transition:background .25s ease}.wishlist-item:hover{background:rgba(0,0,0,.025)}
 @media(max-width:800px){.product-modal{grid-template-columns:1fr;max-height:100dvh;overflow:auto}.product-modal .gallery{min-height:52vh}.gallery-main{min-height:46vh}.modal-info{padding:28px 6vw 45px}.collection-toolbar{position:sticky;top:0;z-index:4;background:var(--paper);padding:12px 0}.collection-filters{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}.collection-filters button{white-space:nowrap}.product-grid{grid-template-columns:1fr 1fr}.quick-add{opacity:1;transform:none}}
 @media(max-width:520px){.product-grid{grid-template-columns:1fr}.product-card .product-info{padding-bottom:18px}.modal-title-row h2{font-size:40px}.sizes{grid-template-columns:repeat(5,1fr)}.swatches{gap:10px}}
+
+/* NOIRE / SEO + ACCESSIBILITY + RESILIENCE */
+.catalog-status{
+  margin:-52px 0 28px auto;
+  max-width:340px;
+  font-size:9px;
+  line-height:1.7;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  text-align:right;
+}
+.not-found{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  text-align:center;
+  padding:60px 6vw;
+  background:var(--paper);
+}
+.not-found h1{
+  font:300 clamp(90px,14vw,190px)/.68 'Cormorant Garamond',serif;
+  letter-spacing:-.045em;
+  margin:18px 0 30px;
+}
+.not-found h1 em{font-style:italic}
+.not-found>p:not(.eyebrow){
+  max-width:360px;
+  margin:0 auto 30px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.8;
+}
+.not-found .button{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  background:var(--ink);
+  color:var(--paper);
+}
+button,a,input,select,textarea{ -webkit-tap-highlight-color:transparent }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:1px solid currentColor;
+  outline-offset:4px;
+}
+.product-modal[role="dialog"]{isolation:isolate}
+.gallery-main>button{z-index:3}
+@media(max-width:560px){
+  .catalog-status{margin:-2px 0 24px;text-align:left}
+}
