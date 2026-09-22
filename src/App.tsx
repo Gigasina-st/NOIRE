@@ -72,6 +72,57 @@ function Hero(){return <section className="hero" id="top"><div className="hero-m
 
 function SectionHeading({index,eyebrow,title,italic,action,onAction}:{index:string;eyebrow:string;title:string;italic:string;action?:string;onAction?:()=>void}){return <div className="section-head"><div><p className="eyebrow">{index} / {eyebrow}</p><h2>{title}<br/><em>{italic}</em></h2></div>{action&&(onAction?<button className="text-link" onClick={onAction}>{action} <ArrowUpRight size={14}/></button>:<a className="text-link" href="#shop">{action} <ArrowUpRight size={14}/></a>)}</div>}
 
+function Campaign01({onDiscover}:{onDiscover:()=>void}){
+  const products=useProducts();
+  const heroProduct=products[0];
+  const campaignProduct=products[1]||products[0];
+  return <section className="campaign-01" aria-label="NOIRÉ Campaign 01">
+    <div className="campaign-intro">
+      <div className="campaign-index"><span>NOIRÉ</span><i/><span>CAMPAIGN 01</span></div>
+      <div className="campaign-intro-copy">
+        <p className="eyebrow light">A VISUAL STUDY / 2026</p>
+        <h2>Form<br/><em>after dark.</em></h2>
+        <p>Silhouette, shadow and the quiet confidence of pieces made to be lived in.</p>
+      </div>
+      <span className="campaign-scroll">Scroll to enter</span>
+    </div>
+    <div className="campaign-frame campaign-frame-main">
+      <img src="/images/noire-editorial.jpg" alt="NOIRÉ Campaign 01 editorial" loading="lazy" decoding="async"/>
+      <div className="campaign-frame-overlay"/>
+      <div className="campaign-frame-copy">
+        <span>LOOK 01 / 04</span>
+        <strong>The New Uniform</strong>
+      </div>
+    </div>
+    <div className="campaign-split">
+      <div className="campaign-frame campaign-frame-tall">
+        <img src="/images/noire-story.jpg" alt="NOIRÉ Campaign 01 portrait" loading="lazy" decoding="async"/>
+        <div className="campaign-frame-copy"><span>LOOK 02 / 04</span><strong>Quiet Structure</strong></div>
+      </div>
+      <div className="campaign-manifesto">
+        <p className="eyebrow">NOIRÉ / CAMPAIGN 01</p>
+        <h3>Less noise.<br/><em>More presence.</em></h3>
+        <p>Designed with restraint. Cut with intention. A collection that does not need to announce itself.</p>
+        <button className="text-link" onClick={onDiscover}>Discover the collection <ArrowUpRight size={14}/></button>
+      </div>
+    </div>
+    <div className="campaign-frame campaign-frame-wide">
+      <img src={heroProduct?.image||"/images/noire-hero.jpg"} alt={heroProduct?.alt||"NOIRÉ signature piece"} loading="lazy" decoding="async"/>
+      <div className="campaign-frame-overlay"/>
+      <div className="campaign-product-lockup">
+        <span>CAMPAIGN 01 / SIGNATURE PIECE</span>
+        <strong>{campaignProduct?.name||"NOIRÉ"}</strong>
+        <b>{campaignProduct?.price||""}</b>
+      </div>
+    </div>
+    <div className="campaign-end">
+      <p className="eyebrow">END OF CAMPAIGN 01</p>
+      <h3>Quietly<br/><em>unforgettable.</em></h3>
+      <button className="button" onClick={onDiscover}>Enter the collection <ArrowUpRight size={15}/></button>
+    </div>
+  </section>
+}
+
 function Featured({openProduct,onCollections}:{openProduct:(p:Product)=>void;onCollections:()=>void}){const products=useProducts();return <section className="section featured" id="collections"><SectionHeading index="01" eyebrow="COLLECTION" title="The art of" italic="restraint." action="View collection" onAction={onCollections}/><div className="feature-grid"><article className="image-card feature-main" onClick={()=>openProduct(products[0])}><img src="/images/noire-story.jpg" alt="NOIRÉ campaign portrait" loading="lazy" decoding="async"/><div className="image-caption"><span>Look 01</span><strong>The New Uniform</strong><ArrowUpRight size={17}/></div></article><article className="image-card feature-side" onClick={()=>openProduct(products[0])}><img src="/images/noire-editorial.jpg" alt="Sculpted wool coat editorial" loading="lazy" decoding="async"/><div className="image-caption"><span>Look 04</span><strong>Architectural Wool</strong><ArrowUpRight size={17}/></div></article></div></section>}
 
 function ProductCard({product,onOpen}:{product:Product;onOpen:(p:Product)=>void}){const {addToCart,toggleWishlist,isWishlist}=useStore();const liked=isWishlist(product.id);return <article className="product-card"><div className="product-image" onClick={()=>onOpen(product)}><img src={product.image} alt={product.alt} loading="lazy" decoding="async"/><button className={'wish '+(liked?'active':'')} onClick={e=>{e.stopPropagation();toggleWishlist(product.id)}} aria-label="Wishlist"><Heart size={17} fill={liked?'currentColor':'none'}/></button><button className="quick-add" onClick={e=>{e.stopPropagation();addToCart(product)}}>Quick add <ArrowUpRight size={14}/></button></div><div className="product-info" onClick={()=>onOpen(product)}><div><h3>{product.name}</h3><p>{product.category}</p></div><strong>{product.price}</strong></div></article>}
@@ -136,5 +187,5 @@ function CartDrawer({close,onCheckout}:{close:()=>void;onCheckout:()=>void}){con
 
 function WishlistDrawer({close,onOpen}:{close:()=>void;onOpen:(p:Product)=>void}){const products=useProducts();const {wishlist,toggleWishlist}=useStore();useEscape(close);const items=products.filter(p=>wishlist.includes(p.id));useLock(true);return <div className="cart-layer"><button className="cart-backdrop" onClick={close}/><aside className="cart-drawer wishlist-drawer"><div className="cart-head"><div><p className="eyebrow">SAVED PIECES</p><h2>{items.length} {items.length===1?'piece':'pieces'}</h2></div><button onClick={close}><X size={22}/></button></div>{items.length?<div className="wishlist-items">{items.map(p=><div className="wishlist-item" key={p.id} onClick={()=>{close();onOpen(p)}}><img src={p.image} alt={p.alt} loading="lazy" decoding="async"/><div><strong>{p.name}</strong><small>{p.category} · {p.price}</small><button onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>Remove</button></div><ArrowUpRight size={15}/></div>)}</div>:<div className="empty-cart"><Heart size={28}/><p>No saved pieces yet.</p><a href="#shop" onClick={close} className="text-link">Explore the collection <ArrowUpRight size={14}/></a></div>}</aside></div>}
 
-function AppInner(){const [menu,setMenu]=useState(false),[search,setSearch]=useState(false),[cart,setCart]=useState(false),[wishlist,setWishlist]=useState(false),[collection,setCollection]=useState(false),[account,setAccount]=useState(false),[checkout,setCheckout]=useState(false);const productSlugRoute=useProductRoute();const products=useProducts();const routeProduct=productSlugRoute?products.find(p=>productSlug(p)===productSlugRoute):null;useCanonicalMeta(routeProduct);const openProduct=(p:Product)=>goToProduct(p);const backFromProduct=()=>{window.history.pushState({},'', '/');window.dispatchEvent(new PopStateEvent('popstate'))};if(productSlugRoute&&!routeProduct){return products.length?<NotFound/>:<main/>}if(window.location.pathname!=='/'&&window.location.pathname!==''&&!productSlugRoute){return <NotFound/>}if(productSlugRoute&&routeProduct){return <><Header onMenu={()=>setMenu(true)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)} onWishlist={()=>setWishlist(true)} onAccount={()=>setAccount(true)} onCollections={()=>setCollection(true)}/><ProductPage product={routeProduct} back={backFromProduct}/><Footer/></>}return <><Header onMenu={()=>setMenu(true)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)} onWishlist={()=>setWishlist(true)} onAccount={()=>setAccount(true)} onCollections={()=>setCollection(true)}/>{menu&&<MobileNav close={()=>setMenu(false)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)} onWishlist={()=>setWishlist(true)} onAccount={()=>setAccount(true)} onCollections={()=>setCollection(true)}/>} {search&&<SearchOverlay close={()=>setSearch(false)} onOpen={openProduct}/>} {cart&&<CartDrawer close={()=>setCart(false)} onCheckout={()=>setCheckout(true)}/>} {wishlist&&<WishlistDrawer close={()=>setWishlist(false)} onOpen={openProduct}/>} {account&&<Account close={()=>setAccount(false)} onCheckout={()=>setCheckout(true)}/>} {checkout&&<Checkout close={()=>setCheckout(false)} onAccount={()=>setAccount(true)}/>}  {collection&&<CollectionPage close={()=>setCollection(false)} openProduct={openProduct}/>}<main><Hero/><Featured openProduct={openProduct} onCollections={()=>setCollection(true)}/><NewArrivals openProduct={openProduct}/><Story/><Editorial/><Journal/><Newsletter/></main><Footer/></>}
+function AppInner(){const [menu,setMenu]=useState(false),[search,setSearch]=useState(false),[cart,setCart]=useState(false),[wishlist,setWishlist]=useState(false),[collection,setCollection]=useState(false),[account,setAccount]=useState(false),[checkout,setCheckout]=useState(false);const productSlugRoute=useProductRoute();const products=useProducts();const routeProduct=productSlugRoute?products.find(p=>productSlug(p)===productSlugRoute):null;useCanonicalMeta(routeProduct);const openProduct=(p:Product)=>goToProduct(p);const backFromProduct=()=>{window.history.pushState({},'', '/');window.dispatchEvent(new PopStateEvent('popstate'))};if(productSlugRoute&&!routeProduct){return products.length?<NotFound/>:<main/>}if(window.location.pathname!=='/'&&window.location.pathname!==''&&!productSlugRoute){return <NotFound/>}if(productSlugRoute&&routeProduct){return <><Header onMenu={()=>setMenu(true)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)} onWishlist={()=>setWishlist(true)} onAccount={()=>setAccount(true)} onCollections={()=>setCollection(true)}/><ProductPage product={routeProduct} back={backFromProduct}/><Footer/></>}return <><Header onMenu={()=>setMenu(true)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)} onWishlist={()=>setWishlist(true)} onAccount={()=>setAccount(true)} onCollections={()=>setCollection(true)}/>{menu&&<MobileNav close={()=>setMenu(false)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)} onWishlist={()=>setWishlist(true)} onAccount={()=>setAccount(true)} onCollections={()=>setCollection(true)}/>} {search&&<SearchOverlay close={()=>setSearch(false)} onOpen={openProduct}/>} {cart&&<CartDrawer close={()=>setCart(false)} onCheckout={()=>setCheckout(true)}/>} {wishlist&&<WishlistDrawer close={()=>setWishlist(false)} onOpen={openProduct}/>} {account&&<Account close={()=>setAccount(false)} onCheckout={()=>setCheckout(true)}/>} {checkout&&<Checkout close={()=>setCheckout(false)} onAccount={()=>setAccount(true)}/>}  {collection&&<CollectionPage close={()=>setCollection(false)} openProduct={openProduct}/>}<main><Hero/><Campaign01 onDiscover={()=>setCollection(true)}/><Featured openProduct={openProduct} onCollections={()=>setCollection(true)}/><NewArrivals openProduct={openProduct}/><Story/><Editorial/><Journal/><Newsletter/></main><Footer/></>}
 export default function App(){return <StoreProvider><CatalogProvider><AppInner/></CatalogProvider></StoreProvider>}
