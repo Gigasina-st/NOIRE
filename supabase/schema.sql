@@ -140,3 +140,52 @@ drop policy if exists "customers create own order items" on public.order_items;
 create policy "customers create own order items" on public.order_items
 for insert to authenticated
 with check (exists(select 1 from public.orders o where o.id = order_id and o.customer_id = auth.uid()));
+
+
+-- Secure customer checkout: prices are read from the database and stock is checked atomically.
+create or replace function public.create_order(
+  p_items jsonb,
+  p_shipping_address jsonb
+)
+returns uuid
+language plpgsql
+security invoker
+set search_path = public, pg_temp
+as $$
+declare
+  v_order_id uuid;
+  v_subtotal numeric := 0;
+  v_item jsonb;
+  v_product_id uuid;
+  v_quantity integer;
+  v_size text;
+  v_color text;
+  v_name text;
+  v_price numeric;
+  v_stock integer;
+begin
+  if auth.uid() is null then raise exception 'Authentication required'; end if;
+  if p_items is null or jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then raise exception 'Cart is empty'; end if;
+  for v_item in select * from jsonb_array_elements(p_items) loop
+    v_product_id := (v_item->>'product_id')::uuid;
+    v_quantity := greatest(1, coalesce((v_item->>'quantity')::integer, 0));
+    v_size := nullif(v_item->>'size',''); v_color := nullif(v_item->>'color','');
+    select name, price, stock into v_name, v_price, v_stock from public.products where id=v_product_id and active=true for update;
+    if not found then raise exception 'Product is unavailable'; end if;
+    if v_stock < v_quantity then raise exception 'Insufficient stock for %', v_name; end if;
+    v_subtotal := v_subtotal + (v_price * v_quantity);
+  end loop;
+  insert into public.orders(customer_id,email,status,subtotal,currency,shipping_address)
+  values(auth.uid(),coalesce(auth.jwt()->>'email',''),'pending',v_subtotal,'EUR',coalesce(p_shipping_address,'{}'::jsonb)) returning id into v_order_id;
+  for v_item in select * from jsonb_array_elements(p_items) loop
+    v_product_id := (v_item->>'product_id')::uuid; v_quantity := greatest(1,coalesce((v_item->>'quantity')::integer,0));
+    v_size := nullif(v_item->>'size',''); v_color := nullif(v_item->>'color','');
+    select name,price into v_name,v_price from public.products where id=v_product_id and active=true;
+    insert into public.order_items(order_id,product_id,product_name,quantity,unit_price,size,color) values(v_order_id,v_product_id,v_name,v_quantity,v_price,v_size,v_color);
+    update public.products set stock=stock-v_quantity where id=v_product_id;
+  end loop;
+  return v_order_id;
+end;
+$$;
+revoke execute on function public.create_order(jsonb,jsonb) from anon;
+grant execute on function public.create_order(jsonb,jsonb) to authenticated;
