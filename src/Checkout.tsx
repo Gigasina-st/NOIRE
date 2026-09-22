@@ -6,7 +6,7 @@ import { useStore } from './store';
 type CheckoutProps={close:()=>void;onAccount:()=>void};
 
 export default function Checkout({close,onAccount}:CheckoutProps){
-  const {cart,subtotal}=useStore();
+  const {cart,subtotal,clearCart}=useStore();
   const [user,setUser]=useState<any>(null);
   const [loading,setLoading]=useState(false);
   const [done,setDone]=useState<string|null>(null);
@@ -28,6 +28,7 @@ export default function Checkout({close,onAccount}:CheckoutProps){
     });
     setLoading(false);
     if(error){setError(error.message);return}
+    clearCart();
     setDone(String(data));
   }
 
