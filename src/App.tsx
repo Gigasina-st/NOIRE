@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Component, useEffect, useMemo, useState, type ErrorInfo, type ImgHTMLAttributes, type ReactNode } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, Heart, Menu, Minus, Plus, Search, ShoppingBag, Trash2, UserRound, X, ZoomIn } from 'lucide-react';
 import { type Product } from './data';
 import { CatalogProvider, useCatalog, useProducts } from './lib/catalog';
@@ -9,6 +9,21 @@ import Checkout from './Checkout';
 const nav=['Shop','Collections','Journal','About'];
 const sizes=['XS','S','M','L','XL'];
 const colors=[['Noir','#171613'],['Ivory','#e8e2d7'],['Stone','#9b958b']];
+
+class AppErrorBoundary extends Component<{children:ReactNode},{hasError:boolean}>{
+  state={hasError:false};
+  static getDerivedStateFromError(){return {hasError:true};}
+  componentDidCatch(error:Error,info:ErrorInfo){console.error('NOIRÉ application error',error,info);}
+  render(){
+    if(this.state.hasError)return <main className="app-error"><p className="eyebrow">NOIRÉ / SYSTEM</p><h1>Something<br/><em>shifted.</em></h1><p>We hit an unexpected moment. Your saved bag remains on this device.</p><button className="button" onClick={()=>window.location.reload()}>Reload NOIRÉ <ArrowUpRight size={15}/></button></main>;
+    return this.props.children;
+  }
+}
+function SafeImage({alt,...props}:ImgHTMLAttributes<HTMLImageElement>){
+  const [failed,setFailed]=useState(false);
+  if(failed)return <div className="image-fallback" role="img" aria-label={alt||'NOIRÉ image'}><span>NOIRÉ</span></div>;
+  return <img {...props} alt={alt} onError={()=>setFailed(true)}/>;
+}
 
 function useLock(locked:boolean){useEffect(()=>{document.body.style.overflow=locked?'hidden':'';return()=>{document.body.style.overflow=''}},[locked])}
 function useEscape(close:()=>void,active=true){useEffect(()=>{if(!active)return;const f=(e:KeyboardEvent)=>e.key==='Escape'&&close();addEventListener('keydown',f);return()=>removeEventListener('keydown',f)},[close,active])}
@@ -188,4 +203,4 @@ function CartDrawer({close,onCheckout}:{close:()=>void;onCheckout:()=>void}){con
 function WishlistDrawer({close,onOpen}:{close:()=>void;onOpen:(p:Product)=>void}){const products=useProducts();const {wishlist,toggleWishlist}=useStore();useEscape(close);const items=products.filter(p=>wishlist.includes(p.id));useLock(true);return <div className="cart-layer"><button className="cart-backdrop" onClick={close}/><aside className="cart-drawer wishlist-drawer"><div className="cart-head"><div><p className="eyebrow">SAVED PIECES</p><h2>{items.length} {items.length===1?'piece':'pieces'}</h2></div><button onClick={close}><X size={22}/></button></div>{items.length?<div className="wishlist-items">{items.map(p=><div className="wishlist-item" key={p.id} onClick={()=>{close();onOpen(p)}}><img src={p.image} alt={p.alt} loading="lazy" decoding="async"/><div><strong>{p.name}</strong><small>{p.category} · {p.price}</small><button onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>Remove</button></div><ArrowUpRight size={15}/></div>)}</div>:<div className="empty-cart"><Heart size={28}/><p>No saved pieces yet.</p><a href="#shop" onClick={close} className="text-link">Explore the collection <ArrowUpRight size={14}/></a></div>}</aside></div>}
 
 function AppInner(){const [menu,setMenu]=useState(false),[search,setSearch]=useState(false),[cart,setCart]=useState(false),[wishlist,setWishlist]=useState(false),[collection,setCollection]=useState(false),[account,setAccount]=useState(false),[checkout,setCheckout]=useState(false);const productSlugRoute=useProductRoute();const products=useProducts();const routeProduct=productSlugRoute?products.find(p=>productSlug(p)===productSlugRoute):null;useCanonicalMeta(routeProduct);const openProduct=(p:Product)=>goToProduct(p);const backFromProduct=()=>{window.history.pushState({},'', '/');window.dispatchEvent(new PopStateEvent('popstate'))};if(productSlugRoute&&!routeProduct){return products.length?<NotFound/>:<main/>}if(window.location.pathname!=='/'&&window.location.pathname!==''&&!productSlugRoute){return <NotFound/>}if(productSlugRoute&&routeProduct){return <><Header onMenu={()=>setMenu(true)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)} onWishlist={()=>setWishlist(true)} onAccount={()=>setAccount(true)} onCollections={()=>setCollection(true)}/><ProductPage product={routeProduct} back={backFromProduct}/><Footer/></>}return <><Header onMenu={()=>setMenu(true)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)} onWishlist={()=>setWishlist(true)} onAccount={()=>setAccount(true)} onCollections={()=>setCollection(true)}/>{menu&&<MobileNav close={()=>setMenu(false)} onSearch={()=>setSearch(true)} onCart={()=>setCart(true)} onWishlist={()=>setWishlist(true)} onAccount={()=>setAccount(true)} onCollections={()=>setCollection(true)}/>} {search&&<SearchOverlay close={()=>setSearch(false)} onOpen={openProduct}/>} {cart&&<CartDrawer close={()=>setCart(false)} onCheckout={()=>setCheckout(true)}/>} {wishlist&&<WishlistDrawer close={()=>setWishlist(false)} onOpen={openProduct}/>} {account&&<Account close={()=>setAccount(false)} onCheckout={()=>setCheckout(true)}/>} {checkout&&<Checkout close={()=>setCheckout(false)} onAccount={()=>setAccount(true)}/>}  {collection&&<CollectionPage close={()=>setCollection(false)} openProduct={openProduct}/>}<main><Hero/><Campaign01 onDiscover={()=>setCollection(true)}/><Featured openProduct={openProduct} onCollections={()=>setCollection(true)}/><NewArrivals openProduct={openProduct}/><Story/><Editorial/><Journal/><Newsletter/></main><Footer/></>}
-export default function App(){return <StoreProvider><CatalogProvider><AppInner/></CatalogProvider></StoreProvider>}
+export default function App(){return <AppErrorBoundary><StoreProvider><CatalogProvider><AppInner/></CatalogProvider></StoreProvider></AppErrorBoundary>}
