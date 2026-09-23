@@ -24,7 +24,8 @@ export default function Checkout({close,onAccount}:CheckoutProps){
     setLoading(true);setError('');
     const {data,error}=await supabase.rpc('create_order',{
       p_items:cart.map(item=>({product_id:item.product.id,quantity:item.quantity,size:item.variant.size,color:item.variant.color})),
-      p_shipping_address:form
+      p_shipping_address:form,
+      p_payment_required:false
     });
     setLoading(false);
     if(error){setError(error.message);return}
