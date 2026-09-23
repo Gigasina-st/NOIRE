@@ -558,3 +558,9 @@ img{background:#e4e0d8}
 .app-error h1{font-family:'Cormorant Garamond',serif;font-size:clamp(64px,10vw,130px);font-weight:300;line-height:.78;letter-spacing:-.035em;margin:0 0 28px}
 .app-error h1 em{font-style:italic}.app-error p:not(.eyebrow){max-width:390px;color:var(--muted);line-height:1.8;font-size:12px}.app-error .button{background:var(--ink);color:var(--paper);margin-top:15px}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+
+/* Product page / header collision fix */
+.site-header.product-header{background:var(--paper);color:var(--ink);height:68px;border-bottom:1px solid var(--line)}
+.product-page{padding-top:68px}
+@media(max-width:800px){.site-header.product-header{height:68px}.product-page{padding-top:68px}}
