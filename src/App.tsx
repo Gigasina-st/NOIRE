@@ -165,7 +165,7 @@ function ProductGallery({product,activeColor}:{product:Product;activeColor?:stri
 function ProductPage({product,back}:{product:Product;back:()=>void}){
   const {addToCart,toggleWishlist,isWishlist}=useStore();
   const availableSizes=product.sizes?.length?product.sizes:sizes;
-  const availableColors=product.colors?.length?product.colors:colors.map(c=>c[0]);
+  const availableColors=product.colors??colors.map(c=>c[0]);
   const [size,setSize]=useState(availableSizes.includes('M')?'M':availableSizes[0]);
   const [color,setColor]=useState(availableColors.includes('Noir')?'Noir':availableColors[0]);
   const [added,setAdded]=useState(false);
