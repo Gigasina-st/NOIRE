@@ -598,3 +598,10 @@ img{background:#e4e0d8}
 .collection-product .product-image,.collection-product.c-product-0 .product-image,.collection-product.c-product-3 .product-image{aspect-ratio:4/5;height:auto}
 @media(max-width:800px){.product-image{aspect-ratio:4/5;height:auto}}
 @media(max-width:520px){.product-image{aspect-ratio:4/5;height:auto}}
+
+/* Product page mobile menu: keep the hamburger above sticky/product content and always tappable. */
+@media(max-width:900px){
+  .site-header.product-header{z-index:200;position:fixed;pointer-events:auto}
+  .site-header.product-header .mobile-menu{position:relative;z-index:201;display:block;pointer-events:auto;padding:10px;margin:-10px}
+  .site-header.product-header .wordmark{position:relative;z-index:201}
+}
