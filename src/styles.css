@@ -599,9 +599,32 @@ img{background:#e4e0d8}
 @media(max-width:800px){.product-image{aspect-ratio:4/5;height:auto}}
 @media(max-width:520px){.product-image{aspect-ratio:4/5;height:auto}}
 
-/* Product page mobile menu: keep the hamburger above sticky/product content and always tappable. */
+/* Product page mobile menu: isolate the header and give the hamburger its own touch target. */
 @media(max-width:900px){
-  .site-header.product-header{z-index:200;position:fixed;pointer-events:auto}
-  .site-header.product-header .mobile-menu{position:relative;z-index:201;display:block;pointer-events:auto;padding:10px;margin:-10px}
-  .site-header.product-header .wordmark{position:relative;z-index:201}
+  .site-header.product-header{
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10000;
+    isolation:isolate;
+    pointer-events:none;
+  }
+  .site-header.product-header .wordmark,
+  .site-header.product-header .mobile-menu{
+    pointer-events:auto;
+    position:relative;
+    z-index:10001;
+  }
+  .site-header.product-header .mobile-menu{
+    display:grid;
+    place-items:center;
+    width:48px;
+    height:48px;
+    min-width:48px;
+    padding:0;
+    margin:0;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
 }
