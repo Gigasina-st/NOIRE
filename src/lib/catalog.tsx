@@ -33,7 +33,7 @@ export function CatalogProvider({children}:{children:ReactNode}){
     let active=true;
     async function loadProducts(){
       const {data,error}=await supabase.from('products')
-        .select('id,name,slug,category,price,currency,description,details,image,gallery,stock,sizes,colors')
+        .select('id,name,slug,category,price,currency,description,details,image,gallery,stock,sizes,colors,color_images')
         .eq('active',true)
         .order('created_at',{ascending:true});
 
