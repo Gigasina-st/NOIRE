@@ -22,8 +22,19 @@ export default function Checkout({close,onAccount}:CheckoutProps){
     if(!user){onAccount();return}
     if(!cart.length){setError('Your bag is empty.');return}
     setLoading(true);setError('');
+    const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const fallbackItems=cart.filter(item=>!uuidPattern.test(item.product.id));
+    let productIds=new Map<string,string>();
+    if(fallbackItems.length){
+      const names=[...new Set(fallbackItems.map(item=>item.product.name))];
+      const {data:rows,error:lookupError}=await supabase.from('products').select('id,name').in('name',names).eq('active',true);
+      if(lookupError){setLoading(false);setError(lookupError.message);return}
+      productIds=new Map((rows||[]).map(row=>[row.name,row.id]));
+      const missing=fallbackItems.find(item=>!productIds.has(item.product.name));
+      if(missing){setLoading(false);setError(`Product "${missing.product.name}" is not available for checkout.`);return}
+    }
     const {data,error}=await supabase.rpc('create_order',{
-      p_items:cart.map(item=>({product_id:item.product.id,quantity:item.quantity,size:item.variant.size,color:item.variant.color})),
+      p_items:cart.map(item=>({product_id:uuidPattern.test(item.product.id)?item.product.id:productIds.get(item.product.name),quantity:item.quantity,size:item.variant.size,color:item.variant.color})),
       p_shipping_address:form,
       p_payment_required:false
     });
