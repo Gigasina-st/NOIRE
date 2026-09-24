@@ -591,3 +591,10 @@ img{background:#e4e0d8}
  .admin-add-color{flex-direction:column}
  .admin-secondary{justify-content:center}
 }
+
+/* Product image framing: show the complete product instead of cropping it inside tall cards. */
+.product-image{aspect-ratio:4/5;height:auto;background:var(--paper);display:flex;align-items:center;justify-content:center}
+.product-image img{width:100%;height:100%;object-fit:contain;object-position:center}
+.collection-product .product-image,.collection-product.c-product-0 .product-image,.collection-product.c-product-3 .product-image{aspect-ratio:4/5;height:auto}
+@media(max-width:800px){.product-image{aspect-ratio:4/5;height:auto}}
+@media(max-width:520px){.product-image{aspect-ratio:4/5;height:auto}}
