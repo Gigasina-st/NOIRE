@@ -8,7 +8,7 @@ import Checkout from './Checkout';
 
 const nav=['Shop','Collections','Journal','About'];
 const sizes=['XS','S','M','L','XL'];
-const colors=[['Noir','#171613'],['Ivory','#e8e2d7'],['Stone','#9b958b']];
+const colors=[['Noir','#171613'],['Ivory','#e8e2d7'],['Stone','#9b958b'],['Burgundy','#6f2b35'],['Olive','#65705a'],['Navy','#26364d'],['Chocolate','#5b4030'],['Grey','#9b9b98'],['White','#f7f5ef'],['Black','#171613'],['Red','#8f3030'],['Blue','#3e5f86'],['Green','#52644d'],['Beige','#c8b99f'],['Brown','#795548'],['Pink','#d8a9b5']];
 
 class AppErrorBoundary extends Component<{children:ReactNode},{hasError:boolean}>{
   state={hasError:false};
@@ -188,7 +188,7 @@ function ProductPage({product,back}:{product:Product;back:()=>void}){
         <strong className="product-page-price">{product.price}</strong>
         <p className="product-page-description">{product.description}</p>
         {product.stock!==undefined&&<p className="stock-note">{soldOut?'Currently unavailable':product.stock<5?`Only ${product.stock} left in the atelier`:'In stock'}</p>}
-        <div className="selector"><div><span>Colour</span><b>{color}</b></div><div className="swatches">{colors.map(([name,hex])=>availableColors.includes(name)&&<button key={name} className={color===name?'selected':''} onClick={()=>setColor(name)} aria-label={name}><i style={{background:hex}}/></button>)}</div></div>
+        <div className="selector"><div><span>Colour</span><b>{color}</b></div><div className="swatches">{availableColors.map(name=>{const hex=colors.find(([n])=>n===name)?.[1]||'#b8b3aa';return <button key={name} className={color===name?'selected':''} onClick={()=>setColor(name)} aria-label={name}><i style={{background:hex}}/></button>})}</div></div>
         <div className="selector"><div><span>Size</span><b>{size}</b></div><div className="sizes">{availableSizes.map(s=><button key={s} className={size===s?'selected':''} onClick={()=>setSize(s)}>{s}</button>)}</div></div>
         <button disabled={soldOut} className={'button modal-add '+(added?'added':'')} onClick={()=>{addToCart(product,{size,color});setAdded(true)}}>{soldOut?'Unavailable':added?<><Check size={15}/> Added to bag</>:<>Add to bag <ArrowUpRight size={15}/></>}</button>
         <button className="details-toggle" onClick={()=>setDetails(!details)}>Product details <ChevronDown size={15} className={details?'open':''}/></button>
