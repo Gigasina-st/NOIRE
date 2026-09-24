@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { supabase } from './supabase';
 import { products as fallbackProducts, type Product } from '../data';
 
-type DbProduct={id:string;name:string;slug:string;category:string;price:number;currency:string;description:string|null;details:string[]|null;image:string|null;gallery:string[]|null;stock:number|null;sizes:string[]|null;colors:string[]|null};
+type DbProduct={id:string;name:string;slug:string;category:string;price:number;currency:string;description:string|null;details:string[]|null;image:string|null;gallery:string[]|null;stock:number|null;sizes:string[]|null;colors:string[]|null;color_images:Record<string,string>|null};
 type CatalogState={products:Product[];loading:boolean;error:string|null};
 
 const CatalogContext=createContext<CatalogState>({products:fallbackProducts,loading:true,error:null});
@@ -21,7 +21,8 @@ function toProduct(row:DbProduct):Product{
     details:row.details?.length?row.details:fallback?.details||[],
     stock:row.stock??fallback?.stock,
     sizes:row.sizes?.length?row.sizes:fallback?.sizes,
-    colors:row.colors?.length?row.colors:fallback?.colors
+    colors:row.colors?.length?row.colors:fallback?.colors,
+    colorImages:row.color_images||fallback?.colorImages
   };
 }
 
