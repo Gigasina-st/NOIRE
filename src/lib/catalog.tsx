@@ -21,7 +21,7 @@ function toProduct(row:DbProduct):Product{
     details:row.details?.length?row.details:fallback?.details||[],
     stock:row.stock??fallback?.stock,
     sizes:row.sizes?.length?row.sizes:fallback?.sizes,
-    colors:row.colors?.length?row.colors:fallback?.colors,
+    colors:row.colors??fallback?.colors,
     colorImages:row.color_images||fallback?.colorImages
   };
 }
