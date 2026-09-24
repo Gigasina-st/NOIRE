@@ -599,32 +599,19 @@ img{background:#e4e0d8}
 @media(max-width:800px){.product-image{aspect-ratio:4/5;height:auto}}
 @media(max-width:520px){.product-image{aspect-ratio:4/5;height:auto}}
 
-/* Product page mobile menu: isolate the header and give the hamburger its own touch target. */
+/* Product page mobile menu: keep the existing layout and give only the control a reliable hit area. */
 @media(max-width:900px){
-  .site-header.product-header{
-    position:fixed;
-    top:0;
-    left:0;
-    right:0;
-    z-index:10000;
-    isolation:isolate;
-    pointer-events:none;
-  }
-  .site-header.product-header .wordmark,
   .site-header.product-header .mobile-menu{
-    pointer-events:auto;
     position:relative;
-    z-index:10001;
-  }
-  .site-header.product-header .mobile-menu{
+    z-index:210;
     display:grid;
     place-items:center;
-    width:48px;
-    height:48px;
-    min-width:48px;
+    width:44px;
+    height:44px;
+    min-width:44px;
     padding:0;
     margin:0;
+    pointer-events:auto;
     touch-action:manipulation;
-    -webkit-tap-highlight-color:transparent;
   }
 }
