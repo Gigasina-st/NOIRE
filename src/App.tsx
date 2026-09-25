@@ -64,7 +64,7 @@ function NotFound(){
   useEffect(()=>{document.title='Page not found — NOIRÉ'},[]);
   return <main className="not-found"><p className="eyebrow">NOIRÉ / 404</p><h1>Not<br/><em>found.</em></h1><p>The page you requested does not exist or has moved.</p><a className="button" href="/">Return home <ArrowUpRight size={15}/></a></main>
 }
-function productSlug(product:Product){return product.name.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
+function productSlug(product:Product){return product.id}
 function goToCheckout(){
   window.history.pushState({checkout:true},'',`/checkout`);
   window.dispatchEvent(new PopStateEvent('popstate'));
