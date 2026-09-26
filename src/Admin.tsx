@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import {
   BarChart3, LayoutDashboard, Package, ShoppingBag, Users,
   Percent, FileText, Settings, LogOut, Plus, Trash2, Save, X, Search,
-  RefreshCw, ChevronRight
+  RefreshCw, ChevronRight, ArrowLeft
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import type { DbOrder, DbProduct } from './lib/types';
@@ -44,6 +44,22 @@ export default function Admin(){
   useEffect(()=>{supabase.auth.getSession().then(({data})=>{setSession(data.session);setLoading(false)});const {data}=supabase.auth.onAuthStateChange((_e,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
   useEffect(()=>{if(session) verifyAdmin()},[session]);
 
+  useEffect(()=>{
+    const initial={admin:true,tab:'dashboard'};
+    window.history.replaceState(initial,'',window.location.href);
+    const handlePopState=(event:PopStateEvent)=>{
+      if(event.state?.admin){
+        const next=(event.state.tab||'dashboard') as Tab;
+        setError('');
+        if(next==='products')setProductFilter(event.state.filter||'all');
+        if(next==='orders')setOrderFilter(event.state.filter||'all');
+        setTab(next);
+      }
+    };
+    window.addEventListener('popstate',handlePopState);
+    return()=>window.removeEventListener('popstate',handlePopState);
+  },[]);
+
   async function verifyAdmin(){
     const {data,error}=await supabase.from('profiles').select('role').eq('id',session.user.id).maybeSingle();
     if(error||data?.role!=='admin'){setAuthorized(false);setError('This account does not have admin access.');return}
@@ -79,9 +95,26 @@ export default function Admin(){
   async function removeProduct(id:string){if(!confirm('Delete this product?'))return;const {error}=await supabase.from('products').delete().eq('id',id);if(error)setError(error.message);else refresh()}
   async function toggleProductActive(id:string,active:boolean){setError('');const {error}=await supabase.from('products').update({active}).eq('id',id);if(error){setError(error.message);return}setProducts(prev=>prev.map(p=>p.id===id?{...p,active}:p))}
   async function logout(){await supabase.auth.signOut();setSession(null)}
-  function nav(next:Tab){setError('');setTab(next)}
-  function navToProducts(filter='all'){setProductFilter(filter);setTab('products')}
-  function navToOrders(status='all'){setOrderFilter(status);setTab('orders')}
+  function nav(next:Tab){
+    setError('');
+    window.history.pushState({admin:true,tab:next},'',window.location.href);
+    setTab(next);
+  }
+  function navToProducts(filter='all'){
+    setError('');
+    setProductFilter(filter);
+    window.history.pushState({admin:true,tab:'products',filter},'',window.location.href);
+    setTab('products');
+  }
+  function navToOrders(status='all'){
+    setError('');
+    setOrderFilter(status);
+    window.history.pushState({admin:true,tab:'orders',filter:status},'',window.location.href);
+    setTab('orders');
+  }
+  function goBack(){
+    if(tab!=='dashboard')window.history.back();
+  }
 
   if(loading)return <div className="admin-screen"><div>Loading NOIRÉ Admin…</div></div>;
   if(!session)return <div className="admin-screen"><form className="admin-login" onSubmit={signIn}><p className="eyebrow">NOIRÉ / PRIVATE</p><h1>Admin<br/><em>Access.</em></h1><input type="email" required placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)}/><input type="password" required placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}/><button className="admin-primary">Sign in</button>{error&&<p className="admin-error">{error}</p>}</form></div>;
@@ -91,7 +124,7 @@ export default function Admin(){
   return <div className="admin-shell">
     <aside><div className="admin-brand">NOIRÉ <span>ADMIN</span></div><nav>{tabs.map(({key,label,Icon})=><button className={tab===key?'active':''} onClick={()=>nav(key)} key={key}><Icon size={15}/>{label}</button>)}</nav><button className="admin-logout" onClick={logout}><LogOut size={15}/> Sign out</button></aside>
     <main className="admin-main">
-      <header><div><p className="eyebrow">CONTROL ROOM</p><h1>{title}</h1></div><div className="admin-header-actions"><span>{session.user.email}</span><button className="icon-btn" onClick={refreshing?undefined:refresh} title="Refresh"><RefreshCw size={16} className={refreshing?'spin':''}/></button></div></header>
+      <header><div><p className="eyebrow">CONTROL ROOM</p><h1>{title}</h1></div><div className="admin-header-actions">{tab!=='dashboard'&&<button type="button" className="admin-back-button" onClick={goBack}><ArrowLeft size={15}/> Back to Overview</button>}<span>{session.user.email}</span><button className="icon-btn" onClick={refreshing?undefined:refresh} title="Refresh"><RefreshCw size={16} className={refreshing?'spin':''}/></button></div></header>
       {error&&<div className="admin-error">{error}</div>}
       {tab==='dashboard'&&<Dashboard products={products} orders={orders} customers={customers} onProducts={(filter)=>navToProducts(filter)} onOrders={(status)=>navToOrders(status)} onCustomers={()=>nav('customers')} onReports={()=>nav('reports')} />}
       {tab==='products'&&<Products products={products} edit={setEditing} remove={removeProduct} toggleActive={toggleProductActive} initialFilter={productFilter}/>}
