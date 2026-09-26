@@ -75,6 +75,7 @@ export default function Admin(){
     if(result.error)setError(result.error.message);else{setEditing(null);await refresh()}setSaving(false);
   }
   async function removeProduct(id:string){if(!confirm('Delete this product?'))return;const {error}=await supabase.from('products').delete().eq('id',id);if(error)setError(error.message);else refresh()}
+  async function toggleProductActive(id:string,active:boolean){setError('');const {error}=await supabase.from('products').update({active}).eq('id',id);if(error){setError(error.message);return}setProducts(prev=>prev.map(p=>p.id===id?{...p,active}:p))}
   async function logout(){await supabase.auth.signOut();setSession(null)}
   function nav(next:Tab){setError('');setTab(next)}
 
@@ -89,7 +90,7 @@ export default function Admin(){
       <header><div><p className="eyebrow">CONTROL ROOM</p><h1>{title}</h1></div><div className="admin-header-actions"><span>{session.user.email}</span><button className="icon-btn" onClick={refreshing?undefined:refresh} title="Refresh"><RefreshCw size={16} className={refreshing?'spin':''}/></button></div></header>
       {error&&<div className="admin-error">{error}</div>}
       {tab==='dashboard'&&<Dashboard products={products} orders={orders} customers={customers} onOrders={()=>nav('orders')} />}
-      {tab==='products'&&<Products products={products} edit={setEditing} remove={removeProduct}/>}
+      {tab==='products'&&<Products products={products} edit={setEditing} remove={removeProduct} toggleActive={toggleProductActive}/>}
       {tab==='orders'&&<Orders orders={orders} onRefresh={refresh}/>}
       {tab==='customers'&&<Customers customers={customers} orders={orders}/>}
       {tab==='discounts'&&<Discounts discounts={discounts} refresh={refresh}/>}
@@ -116,10 +117,10 @@ function Dashboard({products,orders,customers,onOrders}:{products:DbProduct[];or
 function Stat({label,value}:{label:string;value:string|number}){return <div className="admin-stat"><span>{label}</span><strong>{value}</strong></div>}
 function OrderRow({order}:{order:DbOrder}){return <div className="admin-row"><span><b>{order.email}</b><small>{new Date(order.created_at).toLocaleString()}</small></span><strong>€{Number(order.subtotal).toLocaleString()}</strong><span className={'status-pill status-'+order.status}>{order.status}</span></div>}
 
-function Products({products,edit,remove}:{products:DbProduct[];edit:(p:Partial<DbProduct>)=>void;remove:(id:string)=>void}){
+function Products({products,edit,remove,toggleActive}:{products:DbProduct[];edit:(p:Partial<DbProduct>)=>void;remove:(id:string)=>void;toggleActive:(id:string,active:boolean)=>void}){
  const [q,setQ]=useState(''); const [filter,setFilter]=useState('all');
  const visible=products.filter(p=>(p.name+' '+p.category).toLowerCase().includes(q.toLowerCase())).filter(p=>filter==='all'||(filter==='low'?Number(p.stock)<5:filter==='hidden'?!p.active:p.active));
- return <section className="admin-panel"><div className="admin-panel-head"><div><h2>Catalog</h2><p className="admin-muted">{visible.length} of {products.length} products</p></div><button className="admin-primary small" onClick={()=>edit(emptyProduct)}><Plus size={15}/> Add product</button></div><div className="admin-toolbar"><label className="admin-search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search products"/></label><select value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">All</option><option value="active">Active</option><option value="hidden">Hidden</option><option value="low">Low stock</option></select></div>{visible.map(p=><div className="admin-row admin-product-row" key={p.id}><div className="admin-product"><img src={p.image||''} alt=""/><span><b>{p.name}</b><small>{p.category} · €{Number(p.price).toLocaleString()}</small></span></div><span>{p.stock} in stock</span><span className={'status-pill '+(p.active?'status-active':'status-hidden')}>{p.active?'Active':'Hidden'}</span><div><button className="icon-btn" onClick={()=>edit(p)} title="Edit"><Save size={15}/></button><button className="icon-btn danger" onClick={()=>remove(p.id)} title="Delete"><Trash2 size={15}/></button></div></div>)}{!visible.length&&<p className="admin-muted">No products match this filter.</p>}</section>;
+ return <section className="admin-panel"><div className="admin-panel-head"><div><h2>Catalog</h2><p className="admin-muted">{visible.length} of {products.length} products</p></div><button className="admin-primary small" onClick={()=>edit(emptyProduct)}><Plus size={15}/> Add product</button></div><div className="admin-toolbar"><label className="admin-search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search products"/></label><select value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">All</option><option value="active">Active</option><option value="hidden">Hidden</option><option value="low">Low stock</option></select></div>{visible.map(p=><div className="admin-row admin-product-row" key={p.id}><div className="admin-product"><img src={p.image||''} alt=""/><span><b>{p.name}</b><small>{p.category} · €{Number(p.price).toLocaleString()}</small></span></div><span>{p.stock} in stock</span><button type="button" className={'status-pill admin-product-status '+(p.active?'status-active':'status-inactive')} onClick={()=>toggleActive(p.id,!p.active)} title={p.active?'Deactivate product':'Activate product'}>{p.active?'Active':'Inactive'}</button><div><button className="icon-btn" onClick={()=>edit(p)} title="Edit"><Save size={15}/></button><button className="icon-btn danger" onClick={()=>remove(p.id)} title="Delete"><Trash2 size={15}/></button></div></div>)}{!visible.length&&<p className="admin-muted">No products match this filter.</p>}</section>;
 }
 
 function Orders({orders,onRefresh}:{orders:DbOrder[];onRefresh:()=>void}){
