@@ -135,8 +135,6 @@ function OrderDetail({order,close}:{order:DbOrder;close:()=>void}){
  const [freshOrder,setFreshOrder]=useState<DbOrder>(order);
  const [detailLoading,setDetailLoading]=useState(true);
  const [detailError,setDetailError]=useState('');
- const [rawCheckoutOpen,setRawCheckoutOpen]=useState(false);
- const [rawOrderOpen,setRawOrderOpen]=useState(false);
  useEffect(()=>{
    let alive=true;
    setDetailLoading(true); setDetailError('');
