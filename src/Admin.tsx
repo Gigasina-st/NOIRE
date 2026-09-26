@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import {
-  BarChart3, ClipboardList, LayoutDashboard, Package, ShoppingBag, Users,
+  BarChart3, LayoutDashboard, Package, ShoppingBag, Users,
   Percent, FileText, Settings, LogOut, Plus, Trash2, Save, X, Search,
   RefreshCw, ChevronRight
 } from 'lucide-react';
@@ -137,7 +137,7 @@ function OrderDetail({order,close}:{order:DbOrder;close:()=>void}){
 }
 
 function Customers({customers,orders}:{customers:Customer[];orders:DbOrder[]}){
- const [q,setQ]=useState(''); const visible=customers.filter(c=>(c.full_name||'').toLowerCase().includes(q.toLowerCase())||orders.some(o=>o.customer_id===c.id&&o.email.toLowerCase().includes(q.toLowerCase())));
+ const [q,setQ]=useState(''); const visible=customers.filter(c=>(c.full_name||'').toLowerCase().includes(q.toLowerCase())||orders.some(o=>String(o.customer_id)===String(c.id)&&o.email.toLowerCase().includes(q.toLowerCase())));
  return <section className="admin-panel"><div className="admin-panel-head"><div><h2>Customers</h2><p className="admin-muted">{visible.length} registered customers</p></div></div><div className="admin-toolbar"><label className="admin-search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search name or email"/></label></div>{visible.map(c=>{const mine=orders.filter(o=>o.customer_id===c.id);const spend=mine.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+Number(o.subtotal),0);return <div className="admin-row customer-row" key={c.id}><span><b>{c.full_name||'Unnamed customer'}</b><small>{mine[0]?.email||'No email on profile'} · Joined {new Date(c.created_at).toLocaleDateString()}</small></span><span>{mine.length} orders</span><strong>€{spend.toLocaleString()}</strong></div>})}{!visible.length&&<p className="admin-muted">No customers found.</p>}</section>;
 }
 
