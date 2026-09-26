@@ -33,8 +33,8 @@ export default function Admin(){
   const [email,setEmail]=useState(''); const [password,setPassword]=useState('');
   const [error,setError]=useState(''); const [loading,setLoading]=useState(true); const [refreshing,setRefreshing]=useState(false);
   const [tab,setTab]=useState<Tab>('dashboard');
-  const [productFilter,setProductFilter]=useState('all');
-  const [orderFilter,setOrderFilter]=useState('all');
+  const [,setProductFilter]=useState('all');
+  const [,setOrderFilter]=useState('all');
   const [products,setProducts]=useState<DbProduct[]>([]); const [orders,setOrders]=useState<DbOrder[]>([]);
   const [customers,setCustomers]=useState<Customer[]>([]);
   const [discounts,setDiscounts]=useState<Discount[]>([]); const [content,setContent]=useState<ContentBlock[]>([]);
