@@ -33,8 +33,8 @@ export default function Admin(){
   const [email,setEmail]=useState(''); const [password,setPassword]=useState('');
   const [error,setError]=useState(''); const [loading,setLoading]=useState(true); const [refreshing,setRefreshing]=useState(false);
   const [tab,setTab]=useState<Tab>('dashboard');
-  const [,setProductFilter]=useState('all');
-  const [,setOrderFilter]=useState('all');
+  const [productFilter,setProductFilter]=useState('all');
+  const [orderFilter,setOrderFilter]=useState('all');
   const [products,setProducts]=useState<DbProduct[]>([]); const [orders,setOrders]=useState<DbOrder[]>([]);
   const [customers,setCustomers]=useState<Customer[]>([]);
   const [discounts,setDiscounts]=useState<Discount[]>([]); const [content,setContent]=useState<ContentBlock[]>([]);
@@ -94,8 +94,8 @@ export default function Admin(){
       <header><div><p className="eyebrow">CONTROL ROOM</p><h1>{title}</h1></div><div className="admin-header-actions"><span>{session.user.email}</span><button className="icon-btn" onClick={refreshing?undefined:refresh} title="Refresh"><RefreshCw size={16} className={refreshing?'spin':''}/></button></div></header>
       {error&&<div className="admin-error">{error}</div>}
       {tab==='dashboard'&&<Dashboard products={products} orders={orders} customers={customers} onProducts={(filter)=>navToProducts(filter)} onOrders={(status)=>navToOrders(status)} onCustomers={()=>nav('customers')} onReports={()=>nav('reports')} />}
-      {tab==='products'&&<Products products={products} edit={setEditing} remove={removeProduct} toggleActive={toggleProductActive}/>}
-      {tab==='orders'&&<Orders orders={orders} onRefresh={refresh}/>}
+      {tab==='products'&&<Products products={products} edit={setEditing} remove={removeProduct} toggleActive={toggleProductActive} initialFilter={productFilter}/>}
+      {tab==='orders'&&<Orders orders={orders} onRefresh={refresh} initialStatus={orderFilter}/>}
       {tab==='customers'&&<Customers customers={customers} orders={orders}/>}
       {tab==='discounts'&&<Discounts discounts={discounts} refresh={refresh}/>}
       {tab==='content'&&<ContentManager blocks={content} refresh={refresh}/>}
