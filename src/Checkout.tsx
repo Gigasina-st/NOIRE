@@ -17,51 +17,15 @@ export default function Checkout({close,onAccount}:CheckoutProps){
     supabase.auth.getUser().then(({data})=>setUser(data.user));
   },[]);
 
-  async function applyDiscount(){\n    const code=discountCode.trim();\n    if(!code){setAppliedDiscount(null);setError('Enter a discount code.');return}\n    setDiscountLoading(true);setError('');\n    const {data,error}=await supabase.from('discounts').select('code,kind,value,usage_limit,usage_count,starts_at,ends_at').ilike('code',code).eq('active',true).maybeSingle();\n    setDiscountLoading(false);\n    if(error){setError(error.message);setAppliedDiscount(null);return}\n    if(!data){setError('Invalid or expired discount code.');setAppliedDiscount(null);return}\n    const now=Date.now();\n    if(data.starts_at&&new Date(data.starts_at).getTime()>now || data.ends_at&&new Date(data.ends_at).getTime()<now){setError('Invalid or expired discount code.');setAppliedDiscount(null);return}\n    if(data.usage_limit!==null&&data.usage_count>=data.usage_limit){setError('This discount code has reached its usage limit.');setAppliedDiscount(null);return}\n    const amount=data.kind==='percentage'?Math.min(subtotal,Math.round(subtotal*Math.min(Math.max(Number(data.value),0),100)/100*100)/100):Math.min(subtotal,Math.max(Number(data.value),0));\n    setAppliedDiscount({code:data.code,amount});\n  }\n\n  async function placeOrder(e:FormEvent){
-    e.preventDefault();
+  async function applyDiscount(){
+    const code=discountCode.trim();
+    if(!code){setAppliedDiscount(null);setError('Enter a discount code.');return}
     if(!user){onAccount();return}
-    if(!cart.length){setError('Your bag is empty.');return}
-    setLoading(true);setError('');
-    const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    const fallbackItems=cart.filter(item=>!uuidPattern.test(item.product.id));
-    let productIds=new Map<string,string>();
-    if(fallbackItems.length){
-      const names=[...new Set(fallbackItems.map(item=>item.product.name))];
-      const {data:rows,error:lookupError}=await supabase.from('products').select('id,name').in('name',names).eq('active',true);
-      if(lookupError){setLoading(false);setError(lookupError.message);return}
-      productIds=new Map((rows||[]).map(row=>[row.name,row.id]));
-      const missing=fallbackItems.find(item=>!productIds.has(item.product.name));
-      if(missing){setLoading(false);setError(`Product "${missing.product.name}" is not available for checkout.`);return}
-    }
-    const {data,error}=await supabase.rpc('create_order',{
-      p_items:cart.map(item=>({product_id:uuidPattern.test(item.product.id)?item.product.id:productIds.get(item.product.name),quantity:item.quantity,size:item.variant.size,color:item.variant.color})),
-      p_shipping_address:form,
-      p_payment_required:false
-    });
-    setLoading(false);
-    if(error){setError(error.message);return}
-    clearCart();
-    setDone(String(data));
-  }
-
-  if(done)return <div className="checkout-layer"><div className="checkout-success"><div className="success-mark"><Check size={23}/></div><p className="eyebrow">ORDER RECEIVED</p><h1>Quietly<br/><em>confirmed.</em></h1><p>Your order <strong>#{done.slice(0,8).toUpperCase()}</strong> has been placed. We will use your account email for order updates.</p><button className="button checkout-button" onClick={close}>Return to NOIRÉ <ArrowUpRight size={15}/></button></div></div>;
-
-  return <div className="checkout-layer"><div className="checkout-shell">
-    <header className="checkout-header"><button onClick={close}><ArrowLeft size={16}/> Back</button><span className="wordmark">NOIRÉ</span><span className="checkout-secure"><LockKeyhole size={13}/> Secure checkout</span></header>
-    <div className="checkout-grid">
-      <main><p className="eyebrow">CHECKOUT / SHIPPING</p><h1>Complete<br/><em>your order.</em></h1>
-        {!user&&<div className="checkout-login"><span>Already have an account?</span><button onClick={onAccount}>Sign in <ArrowUpRight size={14}/></button></div>}
-        <form className="checkout-form" onSubmit={placeOrder}>
-          <label>Full name<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>
-          <label>Phone<input required value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label>
-          <label>Address<textarea required value={form.address} onChange={e=>setForm({...form,address:e.target.value})}/></label>
-          <div className="checkout-two"><label>City<input required value={form.city} onChange={e=>setForm({...form,city:e.target.value})}/></label><label>Postal code<input required value={form.postalCode} onChange={e=>setForm({...form,postalCode:e.target.value})}/></label></div>
-          <label>Country<input required value={form.country} onChange={e=>setForm({...form,country:e.target.value})}/></label>\n          <div className="checkout-discount"><span>DISCOUNT CODE</span><div><input value={discountCode} onChange={e=>{setDiscountCode(e.target.value);setAppliedDiscount(null)}} placeholder="Enter code"/><button type="button" onClick={applyDiscount} disabled={discountLoading}>{discountLoading?'Checking...':'Apply'}</button></div>{appliedDiscount&&<small>Code {appliedDiscount.code} applied — −€{appliedDiscount.amount.toLocaleString('en-US')}</small>}</div>
-          {error&&<p className="checkout-error">{error}</p>}
-          <button className="button checkout-button" disabled={loading||!cart.length}>{loading?<><Loader2 size={15} className="spin"/> Processing...</>:<>{user?'Place order':'Sign in to continue'} <ArrowUpRight size={15}/></>}</button>
-        </form>
-      </main>
-      <aside className="checkout-summary"><p className="eyebrow">YOUR ORDER</p>{cart.map(x=><div className="summary-item" key={x.product.id+x.variant.size+x.variant.color}><img src={x.product.image} alt=""/><div><strong>{x.product.name}</strong><small>{x.variant.color} · {x.variant.size} · ×{x.quantity}</small></div><b>€{(Number(x.product.price.replace(/\D/g,''))*x.quantity).toLocaleString('en-US')}</b></div>)}<div className="summary-total"><span>Subtotal</span><strong>€{subtotal.toLocaleString('en-US')}</strong></div>{appliedDiscount&&<div className="summary-total"><span>Discount</span><strong>−€{appliedDiscount.amount.toLocaleString('en-US')}</strong></div>}{appliedDiscount&&<div className="summary-total"><span>Total</span><strong>€{Math.max(0,subtotal-appliedDiscount.amount).toLocaleString('en-US')}</strong></div>}<small className="summary-note">Shipping and taxes will be confirmed with your order.</small></aside>
-    </div>
-  </div></div>
-}
+    setDiscountLoading(true);setError('');
+    const {data,error}=await supabase.rpc('validate_discount',{p_code:code,p_subtotal:subtotal});
+    setDiscountLoading(false);
+    if(error){setError(error.message);setAppliedDiscount(null);return}
+    const row=Array.isArray(data)?data[0]:data;
+    if(!row){setError('Invalid or expired discount code.');setAppliedDiscount(null);return}
+    setAppliedDiscount({code:row.code,amount:Number(row.discount_amount)||0});
+  }}
