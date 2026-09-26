@@ -1,3 +1,4 @@
+import { supabase } from './lib/supabase';
 import { Component, useEffect, useMemo, useState, type ErrorInfo, type ImgHTMLAttributes, type ReactNode } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, Heart, Menu, Minus, Plus, Search, ShoppingBag, Trash2, UserRound, X, ZoomIn } from 'lucide-react';
 import { type Product } from './data';
