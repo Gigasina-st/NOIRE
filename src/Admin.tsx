@@ -131,9 +131,46 @@ function Orders({orders,onRefresh}:{orders:DbOrder[];onRefresh:()=>void}){
 
 function OrderDetail({order,close}:{order:DbOrder;close:()=>void}){
  const [items,setItems]=useState<OrderItem[]>([]);
- useEffect(()=>{supabase.from('order_items').select('id,product_name,quantity,unit_price,size,color').eq('order_id',order.id).then(({data})=>setItems((data||[]) as OrderItem[]))},[order.id]);
+ const [customer,setCustomer]=useState<Customer|null>(null);
+ useEffect(()=>{
+   supabase.from('order_items').select('id,product_name,quantity,unit_price,size,color').eq('order_id',order.id).then(({data})=>setItems((data||[]) as OrderItem[]));
+   if(order.customer_id){
+     supabase.from('profiles').select('id,full_name,role,created_at').eq('id',order.customer_id).maybeSingle().then(({data})=>setCustomer((data||null) as Customer|null));
+   }else setCustomer(null);
+ },[order.id,order.customer_id]);
  const address=order.shipping_address||{};
- return <div className="admin-modal-backdrop"><aside className="admin-detail"><button className="admin-close" onClick={close}><X size={18}/></button><p className="eyebrow">ORDER / {order.id.slice(0,8)}</p><h2>Order detail</h2><div className="detail-grid"><div><span>Customer</span><strong>{order.email}</strong></div><div><span>Status</span><strong>{order.status}</strong></div><div><span>Total</span><strong>€{Number(order.subtotal).toLocaleString()}</strong></div><div><span>Created</span><strong>{new Date(order.created_at).toLocaleString()}</strong></div></div><h3>Items</h3>{items.map(i=><div className="admin-detail-row" key={i.id}><span>{i.product_name}<small>{i.color||'—'} · {i.size||'—'} · ×{i.quantity}</small></span><strong>€{Number(i.unit_price).toLocaleString()}</strong></div>)}<h3>Shipping</h3><pre className="admin-address">{JSON.stringify(address,null,2)}</pre></aside></div>;
+ const field=(key:string)=>String((address as any)[key]??'—');
+ return <div className="admin-modal-backdrop"><aside className="admin-detail">
+   <button className="admin-close" onClick={close}><X size={18}/></button>
+   <p className="eyebrow">ORDER / {order.id.slice(0,8)}</p><h2>Order detail</h2>
+   <div className="detail-grid">
+     <div><span>Customer name</span><strong>{customer?.full_name||field('name')||'—'}</strong></div>
+     <div><span>Email</span><strong>{order.email||'—'}</strong></div>
+     <div><span>Phone</span><strong>{field('phone')}</strong></div>
+     <div><span>Status</span><strong>{order.status}</strong></div>
+     <div><span>Total</span><strong>€{Number(order.subtotal).toLocaleString()}</strong></div>
+     <div><span>Created</span><strong>{new Date(order.created_at).toLocaleString()}</strong></div>
+     <div><span>Customer ID</span><strong>{order.customer_id||'—'}</strong></div>
+     <div><span>Account joined</span><strong>{customer?.created_at?new Date(customer.created_at).toLocaleString():'—'}</strong></div>
+     <div><span>Payment status</span><strong>{order.payment_status||'—'}</strong></div>
+     <div><span>Payment provider</span><strong>{order.payment_provider||'—'}</strong></div>
+     <div><span>Payment reference</span><strong>{order.payment_reference||'—'}</strong></div>
+     <div><span>Discount code</span><strong>{order.discount_code||'—'}</strong></div>
+     <div><span>Discount amount</span><strong>€{Number(order.discount_amount||0).toLocaleString()}</strong></div>
+   </div>
+   <h3>Items</h3>{items.map(i=><div className="admin-detail-row" key={i.id}><span>{i.product_name}<small>{i.color||'—'} · {i.size||'—'} · ×{i.quantity}</small></span><strong>€{Number(i.unit_price).toLocaleString()}</strong></div>)}{!items.length&&<p className="admin-muted">No item details found.</p>}
+   <h3>Customer & shipping</h3>
+   <div className="detail-grid">
+     <div><span>Full name</span><strong>{customer?.full_name||field('name')}</strong></div>
+     <div><span>Email</span><strong>{order.email||'—'}</strong></div>
+     <div><span>Phone</span><strong>{field('phone')}</strong></div>
+     <div><span>Country</span><strong>{field('country')}</strong></div>
+     <div><span>City</span><strong>{field('city')}</strong></div>
+     <div><span>Postal code</span><strong>{field('postalCode')||field('postal_code')}</strong></div>
+   </div>
+   <div className="admin-address"><strong>Address</strong><pre>{field('address')}</pre></div>
+   <details className="admin-address"><summary>Raw order data</summary><pre>{JSON.stringify({order,address,customer},null,2)}</pre></details>
+ </aside></div>;
 }
 
 function Customers({customers,orders}:{customers:Customer[];orders:DbOrder[]}){
