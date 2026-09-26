@@ -223,7 +223,7 @@ function OrderDetail({order,close}:{order:DbOrder;close:()=>void}){
    <button type="button" className="admin-raw-toggle" onClick={()=>setRawCheckoutOpen(v=>!v)} aria-expanded={rawCheckoutOpen}>Raw checkout JSON <span>{rawCheckoutOpen?'−':'+'}</span></button>
    {rawCheckoutOpen&&<div className="admin-address admin-raw-details"><pre>{JSON.stringify(address,null,2)}</pre></div>}
    <button type="button" className="admin-raw-toggle" onClick={()=>setRawOrderOpen(v=>!v)} aria-expanded={rawOrderOpen}>Raw order data <span>{rawOrderOpen?'−':'+'}</span></button>
-   {rawOrderOpen&&<div className="admin-address admin-raw-details"><pre>{JSON.stringify({order:freshOrder,address,customer},null,2)}</pre></div>
+   {rawOrderOpen&&<div className="admin-address admin-raw-details"><pre>{JSON.stringify({order:freshOrder,address,customer},null,2)}</pre></div>}
  </aside></div>;
 }
 function Customers({customers,orders}:{customers:Customer[];orders:DbOrder[]}){
