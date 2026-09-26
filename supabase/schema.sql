@@ -3,6 +3,8 @@
 
 create extension if not exists pgcrypto;
 
+create schema if not exists private;
+
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text,
@@ -71,7 +73,7 @@ drop trigger if exists orders_updated_at on public.orders;
 create trigger orders_updated_at before update on public.orders
 for each row execute function public.set_updated_at();
 
-create or replace function public.is_admin()
+create or replace function private.is_admin()
 returns boolean language sql stable security definer set search_path = ''
 as $
   select exists(
@@ -79,6 +81,10 @@ as $
     where id = (select auth.uid()) and role = 'admin'
   )
 $;
+revoke all on schema private from public;
+grant usage on schema private to authenticated;
+revoke all on function private.is_admin() from public;
+grant execute on function private.is_admin() to authenticated;
 
 alter table public.profiles enable row level security;
 alter table public.products enable row level security;
@@ -88,23 +94,23 @@ alter table public.newsletter_subscribers enable row level security;
 
 drop policy if exists "public can read active products" on public.products;
 create policy "public can read active products" on public.products
-for select using (active = true or public.is_admin());
+for select using (active = true or private.is_admin());
 
 drop policy if exists "admins manage products" on public.products;
 create policy "admins manage products" on public.products
-for all using (public.is_admin()) with check (public.is_admin());
+for all using (private.is_admin()) with check (private.is_admin());
 
 drop policy if exists "users read own profile" on public.profiles;
 create policy "users read own profile" on public.profiles
-for select using (id = auth.uid() or public.is_admin());
+for select using (id = auth.uid() or private.is_admin());
 
 drop policy if exists "admins read profiles" on public.profiles;
 create policy "admins read profiles" on public.profiles
-for select using (public.is_admin());
+for select using (private.is_admin());
 
 drop policy if exists "admins manage orders" on public.orders;
 create policy "admins manage orders" on public.orders
-for all using (public.is_admin()) with check (public.is_admin());
+for all using (private.is_admin()) with check (private.is_admin());
 
 drop policy if exists "customers read own orders" on public.orders;
 create policy "customers read own orders" on public.orders
@@ -112,7 +118,7 @@ for select using (customer_id = auth.uid());
 
 drop policy if exists "admins manage order items" on public.order_items;
 create policy "admins manage order items" on public.order_items
-for all using (public.is_admin()) with check (public.is_admin());
+for all using (private.is_admin()) with check (private.is_admin());
 
 drop policy if exists "customers read own order items" on public.order_items;
 create policy "customers read own order items" on public.order_items
@@ -124,7 +130,7 @@ for insert with check (true);
 
 drop policy if exists "admins read subscribers" on public.newsletter_subscribers;
 create policy "admins read subscribers" on public.newsletter_subscribers
-for select using (public.is_admin());
+for select using (private.is_admin());
 
 -- After creating your first account, promote it:
 -- update public.profiles set role='admin' where id='YOUR_AUTH_USER_UUID';
@@ -201,6 +207,59 @@ grant execute on function public.create_order(jsonb,jsonb) to authenticated;
 
 
 -- RPC hardening: these helpers are internal to authenticated RLS checks, not public RPC endpoints.
-revoke execute on function public.is_admin() from public, anon;
-grant execute on function public.is_admin() to authenticated;
+revoke execute on function private.is_admin() from public, anon;
+grant execute on function private.is_admin() to authenticated;
 revoke execute on function public.handle_new_user() from public, anon, authenticated;
+
+
+-- Admin control room tables.
+create table if not exists public.discounts (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  kind text not null default 'percentage' check (kind in ('percentage','fixed')),
+  value numeric not null check (value >= 0),
+  active boolean not null default true,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  usage_limit integer check (usage_limit is null or usage_limit >= 0),
+  usage_count integer not null default 0 check (usage_count >= 0),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.store_settings (
+  key text primary key,
+  value jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.content_blocks (
+  id uuid primary key default gen_random_uuid(),
+  key text not null unique,
+  title text,
+  body text,
+  image text,
+  active boolean not null default true,
+  updated_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+alter table public.discounts enable row level security;
+alter table public.store_settings enable row level security;
+alter table public.content_blocks enable row level security;
+
+drop policy if exists "Admins can manage discounts" on public.discounts;
+create policy "Admins can manage discounts" on public.discounts
+for all to authenticated using (private.is_admin()) with check (private.is_admin());
+
+drop policy if exists "Admins can manage store settings" on public.store_settings;
+create policy "Admins can manage store settings" on public.store_settings
+for all to authenticated using (private.is_admin()) with check (private.is_admin());
+
+drop policy if exists "Admins can manage content blocks" on public.content_blocks;
+create policy "Admins can manage content blocks" on public.content_blocks
+for all to authenticated using (private.is_admin()) with check (private.is_admin());
+
+drop policy if exists "Public can read active content blocks" on public.content_blocks;
+create policy "Public can read active content blocks" on public.content_blocks
+for select to anon, authenticated using (active = true);
