@@ -693,3 +693,14 @@ img{background:#e4e0d8}
 .admin-raw-details{margin-top:0}
 .admin-raw-details[hidden]{display:none}
 .admin-raw-details pre{margin:0}
+
+/* NOIRE / clickable overview navigation */
+.admin-clickable{width:100%;text-align:left}
+.admin-clickable:hover{background:#e8e4dc;transform:translateY(-1px)}
+.admin-wide-stats>button{display:flex;flex-direction:column;gap:9px;padding:0;text-align:left;transition:transform .2s ease,background .2s ease}
+.admin-wide-stats>button:hover{transform:translateY(-1px)}
+.admin-wide-stats>button:focus-visible{outline:1px solid var(--ink);outline-offset:5px}
+.admin-dashboard-order{width:100%;text-align:left;border:0;background:transparent;font:inherit;align-items:center}
+.admin-dashboard-order:hover{background:rgba(255,255,255,.35)}
+.admin-simple-row{width:100%;border:0;background:transparent;text-align:left;cursor:pointer}
+.admin-simple-row:hover{background:rgba(255,255,255,.35)}
