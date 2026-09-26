@@ -33,6 +33,8 @@ export default function Admin(){
   const [email,setEmail]=useState(''); const [password,setPassword]=useState('');
   const [error,setError]=useState(''); const [loading,setLoading]=useState(true); const [refreshing,setRefreshing]=useState(false);
   const [tab,setTab]=useState<Tab>('dashboard');
+  const [productFilter,setProductFilter]=useState('all');
+  const [orderFilter,setOrderFilter]=useState('all');
   const [products,setProducts]=useState<DbProduct[]>([]); const [orders,setOrders]=useState<DbOrder[]>([]);
   const [customers,setCustomers]=useState<Customer[]>([]);
   const [discounts,setDiscounts]=useState<Discount[]>([]); const [content,setContent]=useState<ContentBlock[]>([]);
@@ -78,6 +80,8 @@ export default function Admin(){
   async function toggleProductActive(id:string,active:boolean){setError('');const {error}=await supabase.from('products').update({active}).eq('id',id);if(error){setError(error.message);return}setProducts(prev=>prev.map(p=>p.id===id?{...p,active}:p))}
   async function logout(){await supabase.auth.signOut();setSession(null)}
   function nav(next:Tab){setError('');setTab(next)}
+  function navToProducts(filter='all'){setProductFilter(filter);setTab('products')}
+  function navToOrders(status='all'){setOrderFilter(status);setTab('orders')}
 
   if(loading)return <div className="admin-screen"><div>Loading NOIRÉ Admin…</div></div>;
   if(!session)return <div className="admin-screen"><form className="admin-login" onSubmit={signIn}><p className="eyebrow">NOIRÉ / PRIVATE</p><h1>Admin<br/><em>Access.</em></h1><input type="email" required placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)}/><input type="password" required placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}/><button className="admin-primary">Sign in</button>{error&&<p className="admin-error">{error}</p>}</form></div>;
@@ -89,7 +93,7 @@ export default function Admin(){
     <main className="admin-main">
       <header><div><p className="eyebrow">CONTROL ROOM</p><h1>{title}</h1></div><div className="admin-header-actions"><span>{session.user.email}</span><button className="icon-btn" onClick={refreshing?undefined:refresh} title="Refresh"><RefreshCw size={16} className={refreshing?'spin':''}/></button></div></header>
       {error&&<div className="admin-error">{error}</div>}
-      {tab==='dashboard'&&<Dashboard products={products} orders={orders} customers={customers} onOrders={()=>nav('orders')} />}
+      {tab==='dashboard'&&<Dashboard products={products} orders={orders} customers={customers} onProducts={(filter)=>navToProducts(filter)} onOrders={(status)=>navToOrders(status)} onCustomers={()=>nav('customers')} onReports={()=>nav('reports')} />}
       {tab==='products'&&<Products products={products} edit={setEditing} remove={removeProduct} toggleActive={toggleProductActive}/>}
       {tab==='orders'&&<Orders orders={orders} onRefresh={refresh}/>}
       {tab==='customers'&&<Customers customers={customers} orders={orders}/>}
@@ -102,32 +106,55 @@ export default function Admin(){
   </div>;
 }
 
-function Dashboard({products,orders,customers,onOrders}:{products:DbProduct[];orders:DbOrder[];customers:Customer[];onOrders:()=>void}){
+function Dashboard({products,orders,customers,onProducts,onOrders,onCustomers,onReports}:{products:DbProduct[];orders:DbOrder[];customers:Customer[];onProducts:(filter?:string)=>void;onOrders:(status?:string)=>void;onCustomers:()=>void;onReports:()=>void}){
  const revenue=orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+Number(o.subtotal),0);
  const paid=orders.filter((o:any)=>o.payment_status==='paid').length;
  const low=products.filter(p=>Number(p.stock)<5);
  const recent=orders.slice(0,6);
+ const active=products.filter(p=>p.active).length;
+ const cancelled=orders.filter(o=>o.status==='cancelled').length;
  return <section className="admin-grid">
-  <Stat label="Products" value={products.length}/><Stat label="Orders" value={orders.length}/><Stat label="Revenue" value={'€'+revenue.toLocaleString()}/><Stat label="Customers" value={customers.length}/>
-  <div className="admin-panel admin-wide-stats"><div><span>Low stock</span><strong>{low.length}</strong></div><div><span>Paid orders</span><strong>{paid}</strong></div><div><span>Active products</span><strong>{products.filter(p=>p.active).length}</strong></div><div><span>Cancelled</span><strong>{orders.filter(o=>o.status==='cancelled').length}</strong></div></div>
-  <div className="admin-panel"><div className="admin-panel-head"><h2>Recent orders</h2><button className="admin-secondary" onClick={onOrders}>View all <ChevronRight size={14}/></button></div>{recent.map(o=><OrderRow key={o.id} order={o}/>)}{!recent.length&&<p className="admin-muted">No orders yet.</p>}</div>
-  <div className="admin-panel"><h2>Inventory attention</h2>{low.length?low.slice(0,8).map(p=><div className="admin-simple-row" key={p.id}><span>{p.name}</span><strong className="admin-danger-text">{p.stock} left</strong></div>):<p className="admin-muted">All products have healthy stock levels.</p>}</div>
+  <Stat label="Products" value={products.length} onClick={()=>onProducts('all')}/>
+  <Stat label="Orders" value={orders.length} onClick={()=>onOrders('all')}/>
+  <Stat label="Revenue" value={'€'+revenue.toLocaleString()} onClick={onReports}/>
+  <Stat label="Customers" value={customers.length} onClick={onCustomers}/>
+  <div className="admin-panel admin-wide-stats">
+    <button type="button" onClick={()=>onProducts('low')}><span>Low stock</span><strong>{low.length}</strong></button>
+    <button type="button" onClick={()=>onOrders('paid')}><span>Paid orders</span><strong>{paid}</strong></button>
+    <button type="button" onClick={()=>onProducts('active')}><span>Active products</span><strong>{active}</strong></button>
+    <button type="button" onClick={()=>onOrders('cancelled')}><span>Cancelled</span><strong>{cancelled}</strong></button>
+  </div>
+  <div className="admin-panel">
+    <div className="admin-panel-head"><h2>Recent orders</h2><button className="admin-secondary" onClick={()=>onOrders('all')}>View all <ChevronRight size={14}/></button></div>
+    {recent.map(o=><OrderRow key={o.id} order={o} onClick={()=>onOrders('all')}/>)}
+    {!recent.length&&<p className="admin-muted">No orders yet.</p>}
+  </div>
+  <div className="admin-panel">
+    <div className="admin-panel-head"><h2>Inventory attention</h2><button className="admin-secondary" onClick={()=>onProducts('low')}>View low stock <ChevronRight size={14}/></button></div>
+    {low.length?low.slice(0,8).map(p=><button type="button" className="admin-simple-row" key={p.id} onClick={()=>onProducts('low')}><span>{p.name}</span><strong className="admin-danger-text">{p.stock} left</strong></button>):<p className="admin-muted">All products have healthy stock levels.</p>}
+  </div>
  </section>;
 }
-function Stat({label,value}:{label:string;value:string|number}){return <div className="admin-stat"><span>{label}</span><strong>{value}</strong></div>}
-function OrderRow({order}:{order:DbOrder}){return <div className="admin-row"><span><b>{order.email}</b><small>{new Date(order.created_at).toLocaleString()}</small></span><strong>€{Number(order.subtotal).toLocaleString()}</strong><span className={'status-pill status-'+order.status}>{order.status}</span></div>}
+function Stat({label,value,onClick}:{label:string;value:string|number;onClick?:()=>void}){
+ return onClick?<button type="button" className="admin-stat admin-clickable" onClick={onClick}><span>{label}</span><strong>{value}</strong></button>:<div className="admin-stat"><span>{label}</span><strong>{value}</strong></div>
+}
+function OrderRow({order,onClick}:{order:DbOrder;onClick?:()=>void}){
+ return <button type="button" className="admin-row admin-dashboard-order" onClick={onClick}><span><b>{order.email}</b><small>{new Date(order.created_at).toLocaleString()}</small></span><strong>€{Number(order.subtotal).toLocaleString()}</strong><span className={'status-pill status-'+order.status}>{order.status}</span></button>
+}
 
-function Products({products,edit,remove,toggleActive}:{products:DbProduct[];edit:(p:Partial<DbProduct>)=>void;remove:(id:string)=>void;toggleActive:(id:string,active:boolean)=>void}){
- const [q,setQ]=useState(''); const [filter,setFilter]=useState('all');
+function Products({products,edit,remove,toggleActive,initialFilter='all'}:{products:DbProduct[];edit:(p:Partial<DbProduct>)=>void;remove:(id:string)=>void;toggleActive:(id:string,active:boolean)=>void;initialFilter?:string}){
+ const [q,setQ]=useState(''); const [filter,setFilter]=useState(initialFilter);
+ useEffect(()=>setFilter(initialFilter),[initialFilter]);
  const visible=products.filter(p=>(p.name+' '+p.category).toLowerCase().includes(q.toLowerCase())).filter(p=>filter==='all'||(filter==='low'?Number(p.stock)<5:filter==='hidden'?!p.active:p.active));
  return <section className="admin-panel"><div className="admin-panel-head"><div><h2>Catalog</h2><p className="admin-muted">{visible.length} of {products.length} products</p></div><button className="admin-primary small" onClick={()=>edit(emptyProduct)}><Plus size={15}/> Add product</button></div><div className="admin-toolbar"><label className="admin-search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search products"/></label><select value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">All</option><option value="active">Active</option><option value="hidden">Hidden</option><option value="low">Low stock</option></select></div>{visible.map(p=><div className="admin-row admin-product-row" key={p.id}><div className="admin-product"><img src={p.image||''} alt=""/><span><b>{p.name}</b><small>{p.category} · €{Number(p.price).toLocaleString()}</small></span></div><span>{p.stock} in stock</span><button type="button" className={'status-pill admin-product-status '+(p.active?'status-active':'status-inactive')} onClick={()=>toggleActive(p.id,!p.active)} title={p.active?'Deactivate product':'Activate product'}>{p.active?'Active':'Inactive'}</button><div><button className="icon-btn" onClick={()=>edit(p)} title="Edit"><Save size={15}/></button><button className="icon-btn danger" onClick={()=>remove(p.id)} title="Delete"><Trash2 size={15}/></button></div></div>)}{!visible.length&&<p className="admin-muted">No products match this filter.</p>}</section>;
 }
 
-function Orders({orders,onRefresh}:{orders:DbOrder[];onRefresh:()=>void}){
- const [q,setQ]=useState(''); const [status,setStatusFilter]=useState('all'); const [selected,setSelected]=useState<DbOrder|null>(null); const [busy,setBusy]=useState('');
- const visible=orders.filter(o=>(o.email+' '+JSON.stringify(o.shipping_address||{})).toLowerCase().includes(q.toLowerCase())).filter(o=>status==='all'||o.status===status);
+function Orders({orders,onRefresh,initialStatus='all'}:{orders:DbOrder[];onRefresh:()=>void;initialStatus?:string}){
+ const [q,setQ]=useState(''); const [status,setStatusFilter]=useState(initialStatus); const [selected,setSelected]=useState<DbOrder|null>(null); const [busy,setBusy]=useState('');
+ useEffect(()=>setStatusFilter(initialStatus),[initialStatus]);
+ const visible=orders.filter(o=>(o.email+' '+JSON.stringify(o.shipping_address||{})).toLowerCase().includes(q.toLowerCase())).filter(o=>status==='all'?(true):status==='paid'?((o as any).payment_status==='paid'):o.status===status);
  async function setOrderStatus(id:string,next:string){setBusy(id);const {error}=await supabase.from('orders').update({status:next}).eq('id',id);if(error)alert(error.message);else{onRefresh();setSelected(x=>x?.id===id?({...x,status:next} as DbOrder):x)}setBusy('')}
- return <section className="admin-panel"><div className="admin-panel-head"><div><h2>Order management</h2><p className="admin-muted">{visible.length} of {orders.length} orders</p></div></div><div className="admin-toolbar"><label className="admin-search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search email, city, address"/></label><select value={status} onChange={e=>setStatusFilter(e.target.value)}><option value="all">All statuses</option>{['pending','confirmed','processing','shipped','delivered','cancelled'].map(x=><option key={x}>{x}</option>)}</select></div>{visible.map(o=><div className="admin-row order-row" key={o.id} onClick={()=>setSelected(o)}><span><b>{o.email}</b><small>{new Date(o.created_at).toLocaleString()}</small></span><strong>€{Number(o.subtotal).toLocaleString()}</strong><span>{String(o.shipping_address?.city||'—')}</span><select disabled={busy===o.id} value={o.status} onClick={e=>e.stopPropagation()} onChange={e=>setOrderStatus(o.id,e.target.value)}>{['pending','confirmed','processing','shipped','delivered','cancelled'].map(x=><option key={x}>{x}</option>)}</select></div>)}{!visible.length&&<p className="admin-muted">No orders match this filter.</p>}{selected&&<OrderDetail order={selected} close={()=>setSelected(null)} />}</section>;
+ return <section className="admin-panel"><div className="admin-panel-head"><div><h2>Order management</h2><p className="admin-muted">{visible.length} of {orders.length} orders</p></div></div><div className="admin-toolbar"><label className="admin-search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search email, city, address"/></label><select value={status} onChange={e=>setStatusFilter(e.target.value)}><option value="all">All statuses</option><option value="paid">Paid</option>{['pending','confirmed','processing','shipped','delivered','cancelled'].map(x=><option key={x}>{x}</option>)}</select></div>{visible.map(o=><div className="admin-row order-row" key={o.id} onClick={()=>setSelected(o)}><span><b>{o.email}</b><small>{new Date(o.created_at).toLocaleString()}</small></span><strong>€{Number(o.subtotal).toLocaleString()}</strong><span>{String(o.shipping_address?.city||'—')}</span><select disabled={busy===o.id} value={o.status} onClick={e=>e.stopPropagation()} onChange={e=>setOrderStatus(o.id,e.target.value)}>{['pending','confirmed','processing','shipped','delivered','cancelled'].map(x=><option key={x}>{x}</option>)}</select></div>)}{!visible.length&&<p className="admin-muted">No orders match this filter.</p>}{selected&&<OrderDetail order={selected} close={()=>setSelected(null)} />}</section>;
 }
 
 function OrderDetail({order,close}:{order:DbOrder;close:()=>void}){
