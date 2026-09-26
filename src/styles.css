@@ -704,3 +704,8 @@ img{background:#e4e0d8}
 .admin-dashboard-order:hover{background:rgba(255,255,255,.35)}
 .admin-simple-row{width:100%;border:0;background:transparent;text-align:left;cursor:pointer}
 .admin-simple-row:hover{background:rgba(255,255,255,.35)}
+
+
+/* NOIRE / admin back navigation */
+.admin-back-button{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line,#d7d2c8);background:transparent;color:inherit;padding:9px 12px;cursor:pointer;font:inherit;font-size:12px;letter-spacing:.02em;transition:background .2s ease,transform .2s ease}
+.admin-back-button:hover{background:#e8e4dc;transform:translateX(-1px)}
