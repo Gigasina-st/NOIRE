@@ -263,3 +263,10 @@ for all to authenticated using (private.is_admin()) with check (private.is_admin
 drop policy if exists "Public can read active content blocks" on public.content_blocks;
 create policy "Public can read active content blocks" on public.content_blocks
 for select to anon, authenticated using (active = true);
+
+-- Checkout discount support
+alter table public.orders add column if not exists discount_code text;
+alter table public.orders add column if not exists discount_amount numeric not null default 0;
+
+-- Securely validates an entered code without exposing the discounts table to customers.
+-- The final order RPC re-validates the code and increments usage atomically.
