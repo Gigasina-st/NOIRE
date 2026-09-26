@@ -7,4 +7,5 @@ export type DbOrder = {
   id:string; customer_id?:string|null; email:string; status:'pending'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled';
   subtotal:number; currency:string; shipping_address?:Record<string,unknown>; created_at:string; updated_at:string;
   payment_status?:'not_required'|'pending'|'paid'|'failed'|'refunded'; payment_provider?:string|null; payment_reference?:string|null; paid_at?:string|null;
+  discount_code?:string|null; discount_amount?:number;
 };
