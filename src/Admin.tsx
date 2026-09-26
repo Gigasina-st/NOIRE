@@ -134,9 +134,10 @@ function OrderDetail({order,close}:{order:DbOrder;close:()=>void}){
  const [customer,setCustomer]=useState<Customer|null>(null);
  const [freshOrder,setFreshOrder]=useState<DbOrder>(order);
  const [detailLoading,setDetailLoading]=useState(true);
+ const [detailError,setDetailError]=useState('');
  useEffect(()=>{
    let alive=true;
-   setDetailLoading(true);
+   setDetailLoading(true); setDetailError('');
    (async()=>{
      const [orderResult,itemsResult,customerResult]=await Promise.all([
        supabase.from('orders').select('*').eq('id',order.id).maybeSingle(),
@@ -147,6 +148,10 @@ function OrderDetail({order,close}:{order:DbOrder;close:()=>void}){
      ]);
      if(!alive)return;
      if(orderResult.data)setFreshOrder(orderResult.data as DbOrder);
+     else if(orderResult.error)setDetailError(orderResult.error.message);
+     if(itemsResult.error && !itemsResult.error.message.toLowerCase().includes('permission')){
+       setDetailError(itemsResult.error.message);
+     }
      setItems((itemsResult.data||[]) as OrderItem[]);
      setCustomer((customerResult.data||null) as Customer|null);
      setDetailLoading(false);
@@ -154,7 +159,7 @@ function OrderDetail({order,close}:{order:DbOrder;close:()=>void}){
    return()=>{alive=false};
  },[order.id,order.customer_id]);
 
- const addressRaw=freshOrder.shipping_address;
+ const addressRaw=freshOrder.shipping_address ?? order.shipping_address;
  const address=typeof addressRaw==='string'
    ? (()=>{try{return JSON.parse(addressRaw)}catch{return {}}})()
    : (addressRaw||{}) as Record<string,unknown>;
@@ -166,38 +171,55 @@ function OrderDetail({order,close}:{order:DbOrder;close:()=>void}){
    return '—';
  };
  const total=Number(freshOrder.subtotal)||0;
+ const customerName=field('name')!=='—'?field('name'):(customer?.full_name||'—');
  return <div className="admin-modal-backdrop"><aside className="admin-detail">
    <button className="admin-close" onClick={close}><X size={18}/></button>
    <p className="eyebrow">ORDER / {freshOrder.id.slice(0,8)}</p><h2>Order detail</h2>
    {detailLoading&&<p className="admin-muted">Loading complete customer details…</p>}
+   {detailError&&<p className="admin-error">Some live detail data could not be loaded. Showing the information saved with this order.</p>}
+
+   <h3>Customer information</h3>
    <div className="detail-grid">
-     <div><span>Customer name</span><strong>{field('name')!=='—'?field('name'):(customer?.full_name||'—')}</strong></div>
-     <div><span>Email</span><strong>{freshOrder.email||'—'}</strong></div>
+     <div><span>Full name</span><strong>{customerName}</strong></div>
+     <div><span>Email</span><strong>{freshOrder.email||order.email||'—'}</strong></div>
      <div><span>Phone</span><strong>{field('phone','mobile','telephone')}</strong></div>
+     <div><span>Country</span><strong>{field('country')}</strong></div>
+     <div><span>City</span><strong>{field('city')}</strong></div>
+     <div><span>Postal code</span><strong>{field('postalCode','postal_code','zip','zipCode')}</strong></div>
+     <div className="detail-full"><span>Address</span><strong>{field('address','street','shipping_address')}</strong></div>
+   </div>
+
+   <h3>Order information</h3>
+   <div className="detail-grid">
      <div><span>Status</span><strong>{freshOrder.status}</strong></div>
      <div><span>Total</span><strong>€{total.toLocaleString()}</strong></div>
      <div><span>Created</span><strong>{new Date(freshOrder.created_at).toLocaleString()}</strong></div>
      <div><span>Customer ID</span><strong>{freshOrder.customer_id||'—'}</strong></div>
-     <div><span>Account joined</span><strong>{customer?.created_at?new Date(customer.created_at).toLocaleString():'—'}</strong></div>
      <div><span>Payment status</span><strong>{freshOrder.payment_status||'—'}</strong></div>
      <div><span>Payment provider</span><strong>{freshOrder.payment_provider||'—'}</strong></div>
      <div><span>Payment reference</span><strong>{freshOrder.payment_reference||'—'}</strong></div>
      <div><span>Discount code</span><strong>{freshOrder.discount_code||'—'}</strong></div>
      <div><span>Discount amount</span><strong>€{Number(freshOrder.discount_amount||0).toLocaleString()}</strong></div>
+     <div><span>Account joined</span><strong>{customer?.created_at?new Date(customer.created_at).toLocaleString():'—'}</strong></div>
    </div>
-   <h3>Items</h3>{items.map(i=><div className="admin-detail-row" key={i.id}><span>{i.product_name}<small>{i.color||'—'} · {i.size||'—'} · ×{i.quantity}</small></span><strong>€{Number(i.unit_price).toLocaleString()}</strong></div>)}{!items.length&&!detailLoading&&<p className="admin-muted">No item details found.</p>}
-   <h3>Customer & shipping</h3>
-   <div className="detail-grid">
-     <div><span>Full name</span><strong>{field('name')!=='—'?field('name'):(customer?.full_name||'—')}</strong></div>
-     <div><span>Email</span><strong>{freshOrder.email||'—'}</strong></div>
+
+   <h3>Items purchased</h3>
+   {items.map(i=><div className="admin-detail-row" key={i.id}><span><b>{i.product_name}</b><small>{i.color||'—'} · {i.size||'—'} · ×{i.quantity}</small></span><strong>€{Number(i.unit_price).toLocaleString()}</strong></div>)}
+   {!items.length&&!detailLoading&&<p className="admin-muted">No item details found.</p>}
+
+   <h3>All checkout information</h3>
+   <div className="admin-address admin-checkout-data">
+     <div><span>Full name</span><strong>{customerName}</strong></div>
+     <div><span>Email</span><strong>{freshOrder.email||order.email||'—'}</strong></div>
      <div><span>Phone</span><strong>{field('phone','mobile','telephone')}</strong></div>
      <div><span>Country</span><strong>{field('country')}</strong></div>
      <div><span>City</span><strong>{field('city')}</strong></div>
      <div><span>Postal code</span><strong>{field('postalCode','postal_code','zip','zipCode')}</strong></div>
+     <div className="checkout-data-address"><span>Address</span><strong>{field('address','street','shipping_address')}</strong></div>
    </div>
-   <div className="admin-address"><strong>Address</strong><pre>{field('address','street','shipping_address')}</pre></div>
-   <details className="admin-address"><summary>All submitted checkout information</summary><pre>{JSON.stringify(address,null,2)}</pre></details>
-   <details className="admin-address"><summary>Raw order data</summary><pre>{JSON.stringify({order:freshOrder,address,customer},null,2)}</pre></details>
+
+   <details className="admin-address admin-raw-details"><summary>Raw checkout JSON</summary><pre>{JSON.stringify(address,null,2)}</pre></details>
+   <details className="admin-address admin-raw-details"><summary>Raw order data</summary><pre>{JSON.stringify({order:freshOrder,address,customer},null,2)}</pre></details>
  </aside></div>;
 }
 function Customers({customers,orders}:{customers:Customer[];orders:DbOrder[]}){
