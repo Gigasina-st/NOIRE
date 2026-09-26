@@ -4,6 +4,7 @@ export type DbProduct = {
   sizes:string[]; color_images:Record<string,string>; stock:number; featured:boolean; active:boolean; created_at:string; updated_at:string;
 };
 export type DbOrder = {
-  id:string; email:string; status:'pending'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled';
+  id:string; customer_id?:string|null; email:string; status:'pending'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled';
   subtotal:number; currency:string; shipping_address?:Record<string,unknown>; created_at:string; updated_at:string;
+  payment_status?:'not_required'|'pending'|'paid'|'failed'|'refunded'; payment_provider?:string|null; payment_reference?:string|null; paid_at?:string|null;
 };
