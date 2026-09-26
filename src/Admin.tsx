@@ -218,8 +218,10 @@ function OrderDetail({order,close}:{order:DbOrder;close:()=>void}){
      <div className="checkout-data-address"><span>Address</span><strong>{field('address','street','shipping_address')}</strong></div>
    </div>
 
-   <details className="admin-address admin-raw-details"><summary>Raw checkout JSON</summary><pre>{JSON.stringify(address,null,2)}</pre></details>
-   <details className="admin-address admin-raw-details"><summary>Raw order data</summary><pre>{JSON.stringify({order:freshOrder,address,customer},null,2)}</pre></details>
+   <button type="button" className="admin-raw-toggle" onClick={(e)=>{const el=e.currentTarget.nextElementSibling as HTMLDivElement|null;if(el)el.hidden=!el.hidden;}} aria-expanded="false">Raw checkout JSON <span>+</span></button>
+   <div className="admin-address admin-raw-details" hidden><pre>{JSON.stringify(address,null,2)}</pre></div>
+   <button type="button" className="admin-raw-toggle" onClick={(e)=>{const el=e.currentTarget.nextElementSibling as HTMLDivElement|null;if(el)el.hidden=!el.hidden;}} aria-expanded="false">Raw order data <span>+</span></button>
+   <div className="admin-address admin-raw-details" hidden><pre>{JSON.stringify({order:freshOrder,address,customer},null,2)}</pre></div>
  </aside></div>;
 }
 function Customers({customers,orders}:{customers:Customer[];orders:DbOrder[]}){
