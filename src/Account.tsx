@@ -51,14 +51,14 @@ export default function Account({close,onCheckout}:AccountProps){
   async function signOut(){await supabase.auth.signOut();setMessage('از حساب خارج شدید.');}
 
   return <div className="account-layer"><button className="account-backdrop" onClick={close}/><aside className="account-panel">
-    <div className="account-head"><div><p className="eyebrow">NOIRÉ / حساب کاربری</p><h2>{session?'Your account':'Welcome.'}</h2></div><button onClick={close}><X size={22}/></button></div>
+    <div className="account-head"><div><p className="eyebrow">NOIRÉ / حساب کاربری</p><h2>{session?'حساب کاربری شما':'خوش آمدید.'}</h2></div><button onClick={close}><X size={22}/></button></div>
     {session?<div className="account-content">
-      <div className="account-intro"><span>{session.user.email}</span><button onClick={signOut}><LogOut size={14}/> Sign out</button></div>
-      <section className="account-section"><div className="account-section-head"><span>تاریخچه سفارش‌ها</span><span>{orders.length} orders</span></div>
+      <div className="account-intro"><span>{session.user.email}</span><button onClick={signOut}><LogOut size={14}/> خروج</button></div>
+      <section className="account-section"><div className="account-section-head"><span>تاریخچه سفارش‌ها</span><span>{orders.length} سفارش</span></div>
         {orders.length?orders.map(o=><button className="account-order" key={o.id} onClick={()=>setSelected(o)}><div><strong>سفارش #{o.id.slice(0,8).toUpperCase()}</strong><small>{new Date(o.created_at).toLocaleDateString()} · {o.status}</small></div><b>{o.currency||'EUR'} {Number(o.subtotal).toLocaleString('en-US')}</b></button>):<p className="account-empty">اولین سفارش شما اینجا نمایش داده می‌شود.</p>}
       </section>
       {selected&&<div className="account-detail"><div className="account-detail-head"><div><span>ORDER #{selected.id.slice(0,8).toUpperCase()}</span><strong>{selected.status}</strong></div><button onClick={()=>setSelected(null)}><X size={16}/></button></div><p>{selected.shipping_address?.address}</p><small>{selected.shipping_address?.city} · {selected.shipping_address?.postalCode} · {selected.shipping_address?.country}</small><OrderTracking status={selected.status}/></div>}
-      <button className="button account-cta" onClick={()=>{close();onCheckout()}}>Continue shopping <ArrowUpRight size={15}/></button>
+      <button className="button account-cta" onClick={()=>{close();onCheckout()}} >ادامه خرید <ArrowUpRight size={15}/></button>
     </div>:<div className="account-content">
       <div className="auth-tabs"><button className={mode==='signin'?'active':''} onClick={()=>{setMode('signin');setMessage('')}}>ورود</button><button className={mode==='signup'?'active':''} onClick={()=>{setMode('signup');setMessage('')}}>ایجاد حساب</button></div>
       <form className="account-form" onSubmit={submit}>
@@ -66,7 +66,7 @@ export default function Account({close,onCheckout}:AccountProps){
         <label>آدرس ایمیل<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email"/></label>
         <label>رمز عبور<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={8} autoComplete={mode==='signin'?'current-password':'new-password'}/></label>
         {message&&<p className="account-message">{message}</p>}
-        <button className="button account-cta" disabled={loading}>{loading?<><Loader2 size={15} className="spin"/> Working...</>:<>{mode==='signin'?'Sign in':'Create account'} <ArrowUpRight size={15}/></>}</button>
+        <button className="button account-cta" disabled={loading}>{loading?<><Loader2 size={15} className="spin"/> در حال پردازش...</>:<>{mode==='signin'?'ورود':'ایجاد حساب'} <ArrowUpRight size={15}/></>}</button>
       </form>
       <p className="account-note">حساب کاربری شما سفارش‌ها و اطلاعات ذخیره‌شده‌تان را در همه بازدیدها یکجا نگه می‌دارد.</p>
     </div>}
