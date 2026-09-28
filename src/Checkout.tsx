@@ -81,13 +81,13 @@ export default function Checkout({close,onAccount}:CheckoutProps){
               <input value={discountCode} onChange={e=>{setDiscountCode(e.target.value);setAppliedDiscount(null)}} placeholder="کد را وارد کنید"/>
               <button type="button" onClick={applyDiscount} disabled={discountLoading}>{discountLoading?'در حال بررسی...':'Apply'}</button>
             </div>
-            {appliedDiscount&&<small>Code {appliedDiscount.code} applied — −€{appliedDiscount.amount.toLocaleString('en-US')}</small>}
+            {appliedDiscount&&<small>Code {appliedDiscount.code} applied — −{appliedDiscount.amount.toLocaleString('en-US')} تومان</small>}
           </div>
           {error&&<p className="checkout-error">{error}</p>}
           <button className="button checkout-button" disabled={loading||!cart.length}>{loading?<><Loader2 size={15} className="spin"/> Processing...</>:<>{user?'ثبت سفارش':'برای ادامه وارد شوید'} <ArrowUpRight size={15}/></>}</button>
         </form>
       </main>
-      <aside className="checkout-summary"><p className="eyebrow">سفارش شما</p>{cart.map(x=><div className="summary-item" key={x.product.id+x.variant.size+x.variant.color}><img src={x.product.image} alt=""/><div><strong>{x.product.name}</strong><small>{x.variant.color} · {x.variant.size} · ×{x.quantity}</small></div><b>€{(Number(x.product.price.replace(/\D/g,''))*x.quantity).toLocaleString('en-US')}</b></div>)}<div className="summary-total"><span>جمع جزء</span><strong>€{subtotal.toLocaleString('en-US')}</strong></div>{appliedDiscount&&<div className="summary-total"><span>تخفیف</span><strong>−€{appliedDiscount.amount.toLocaleString('en-US')}</strong></div>}{appliedDiscount&&<div className="summary-total"><span>مجموع</span><strong>€{Math.max(0,subtotal-appliedDiscount.amount).toLocaleString('en-US')}</strong></div>}<small className="summary-note">هزینه ارسال و مالیات همراه با سفارش تأیید می‌شود.</small></aside>
+      <aside className="checkout-summary"><p className="eyebrow">سفارش شما</p>{cart.map(x=><div className="summary-item" key={x.product.id+x.variant.size+x.variant.color}><img src={x.product.image} alt=""/><div><strong>{x.product.name}</strong><small>{x.variant.color} · {x.variant.size} · ×{x.quantity}</small></div><b>€{(Number(x.product.price.replace(/\D/g,''))*x.quantity).toLocaleString('en-US')} تومان</b></div>)}<div className="summary-total"><span>جمع جزء</span><strong>€{subtotal.toLocaleString('en-US')} تومان</strong></div>{appliedDiscount&&<div className="summary-total"><span>تخفیف</span><strong>−{appliedDiscount.amount.toLocaleString('en-US')} تومان</strong></div>}{appliedDiscount&&<div className="summary-total"><span>مجموع</span><strong>€{Math.max(0,subtotal-appliedDiscount.amount).toLocaleString('en-US')} تومان</strong></div>}<small className="summary-note">هزینه ارسال و مالیات همراه با سفارش تأیید می‌شود.</small></aside>
     </div>
   </div></div>
 }
