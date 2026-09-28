@@ -13,7 +13,7 @@ function toProduct(row:DbProduct):Product{
     id:row.id,
     name:row.name,
     category:row.category,
-    price:new Intl.NumberFormat('en-US',{style:'currency',currency:row.currency||'EUR',maximumFractionDigits:0}).format(Number(row.price)),
+    price:row.currency==='تومان'?`${Number(row.price).toLocaleString('en-US')} تومان`:new Intl.NumberFormat('en-US',{style:'currency',currency:row.currency||'EUR',maximumFractionDigits:0}).format(Number(row.price)),
     image:row.image||fallback?.image||'',
     alt:fallback?.alt||row.name,
     gallery:row.gallery?.length?row.gallery:fallback?.gallery||[],
