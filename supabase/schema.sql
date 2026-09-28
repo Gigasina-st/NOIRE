@@ -186,7 +186,7 @@ begin
     v_subtotal := v_subtotal + (v_price * v_quantity);
   end loop;
   insert into public.orders(customer_id,email,status,subtotal,currency,shipping_address)
-  values(auth.uid(),coalesce(auth.jwt()->>'email',''),'pending',v_subtotal,'EUR',coalesce(p_shipping_address,'{}'::jsonb))
+  values(auth.uid(),coalesce(auth.jwt()->>'email',''),'pending',v_subtotal,'تومان',coalesce(p_shipping_address,'{}'::jsonb))
   returning id into v_order_id;
   for v_item in select * from jsonb_array_elements(p_items) loop
     v_product_id := (v_item->>'product_id')::uuid;
