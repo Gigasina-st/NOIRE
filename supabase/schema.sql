@@ -248,6 +248,31 @@ alter table public.discounts enable row level security;
 alter table public.store_settings enable row level security;
 alter table public.content_blocks enable row level security;
 
+-- Journal editorial entries and product assignments.
+create table if not exists public.journal_entries (
+  id uuid primary key default gen_random_uuid(),
+  section text not null check (section in ('uniform','atelier','after-dark')),
+  title text not null,
+  summary text not null default '',
+  body text not null default '',
+  image text not null default '',
+  product_ids uuid[] not null default '{}',
+  active boolean not null default true,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.journal_entries enable row level security;
+drop policy if exists "Public can read active journal entries" on public.journal_entries;
+create policy "Public can read active journal entries" on public.journal_entries
+for select to anon, authenticated using (active=true);
+drop policy if exists "Admins can manage journal entries" on public.journal_entries;
+create policy "Admins can manage journal entries" on public.journal_entries
+for all to authenticated using (private.is_admin()) with check (private.is_admin());
+create index if not exists journal_entries_section_sort_idx on public.journal_entries(section, sort_order, created_at);
+
+
 drop policy if exists "Admins can manage discounts" on public.discounts;
 create policy "Admins can manage discounts" on public.discounts
 for all to authenticated using (private.is_admin()) with check (private.is_admin());
