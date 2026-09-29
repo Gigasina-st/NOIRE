@@ -271,6 +271,15 @@ drop policy if exists "Admins can manage journal entries" on public.journal_entr
 create policy "Admins can manage journal entries" on public.journal_entries
 for all to authenticated using (private.is_admin()) with check (private.is_admin());
 create index if not exists journal_entries_section_sort_idx on public.journal_entries(section, sort_order, created_at);
+insert into public.journal_entries(section,title,summary,body,sort_order)
+select 'uniform','یونیفرم جدید','On proportion and everyday ritual','مطالعه‌ای درباره تناسب، ریتم روزمره و فرم‌هایی که برای زندگی ساخته شده‌اند.',1
+where not exists (select 1 from public.journal_entries where section='uniform');
+insert into public.journal_entries(section,title,summary,body,sort_order)
+select 'atelier','درون آتلیه','متریال، دست و خویشتن‌داری','نگاهی نزدیک به متریال، دست‌ساخته‌ها و جزئیات آرامی که هویت NOIRÉ را می‌سازند.',1
+where not exists (select 1 from public.journal_entries where section='atelier');
+insert into public.journal_entries(section,title,summary,body,sort_order)
+select 'after-dark','After Dark','مطالعه‌ای بصری در سایه','فرم، سایه و پالت شبانه در روایتی تصویری از مجموعه پاییز / زمستان ۱۴۰۵.',1
+where not exists (select 1 from public.journal_entries where section='after-dark');
 
 
 drop policy if exists "Admins can manage discounts" on public.discounts;
