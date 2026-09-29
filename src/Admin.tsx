@@ -13,6 +13,7 @@ type Tab='dashboard'|'products'|'orders'|'customers'|'discounts'|'content'|'sett
 type Customer={id:string;full_name:string|null;role:string;created_at:string};
 type Discount={id:string;code:string;kind:'percentage'|'fixed';value:number;active:boolean;starts_at:string|null;ends_at:string|null;usage_limit:number|null;usage_count:number;created_at:string;updated_at:string};
 type ContentBlock={id:string;key:string;title:string|null;body:string|null;image:string|null;active:boolean};
+type JournalEntry={id:string;section:'uniform'|'atelier'|'after-dark';title:string;summary:string;body:string;image:string;product_ids:string[];active:boolean;sort_order:number;};
 type OrderItem={id:string;product_name:string;quantity:number;unit_price:number;size:string|null;color:string|null};
 type OrderDetail=DbOrder & {payment_status?:string;payment_provider?:string|null;payment_reference?:string|null;shipping_address?:Record<string,unknown>};
 
@@ -37,7 +38,7 @@ export default function Admin(){
   const [orderFilter,setOrderFilter]=useState('all');
   const [products,setProducts]=useState<DbProduct[]>([]); const [orders,setOrders]=useState<DbOrder[]>([]);
   const [customers,setCustomers]=useState<Customer[]>([]);
-  const [discounts,setDiscounts]=useState<Discount[]>([]); const [content,setContent]=useState<ContentBlock[]>([]);
+  const [discounts,setDiscounts]=useState<Discount[]>([]); const [content,setContent]=useState<ContentBlock[]>([]); const [journalEntries,setJournalEntries]=useState<JournalEntry[]>([]);
   const [settings,setSettings]=useState<Record<string,any>>({});
   const [editing,setEditing]=useState<Partial<DbProduct>|null>(null); const [saving,setSaving]=useState(false);
 
@@ -68,12 +69,13 @@ export default function Admin(){
 
   async function refresh(){
     setRefreshing(true); setError('');
-    const [p,o,c,d,cb,ss]=await Promise.all([
+    const [p,o,c,d,cb,je,ss]=await Promise.all([
       supabase.from('products').select('*').order('created_at',{ascending:false}),
       supabase.from('orders').select('*').order('created_at',{ascending:false}),
       supabase.from('profiles').select('id,full_name,role,created_at').eq('role','customer').order('created_at',{ascending:false}),
       supabase.from('discounts').select('*').order('created_at',{ascending:false}),
       supabase.from('content_blocks').select('id,key,title,body,image,active').order('key'),
+      supabase.from('journal_entries').select('*').order('section').order('sort_order').order('created_at'),
       supabase.from('store_settings').select('key,value')
     ]);
     if(p.error)setError(p.error.message);else setProducts((p.data||[]) as DbProduct[]);
@@ -81,6 +83,7 @@ export default function Admin(){
     if(!c.error)setCustomers((c.data||[]) as Customer[]);
     if(!d.error)setDiscounts((d.data||[]) as Discount[]);
     if(!cb.error)setContent((cb.data||[]) as ContentBlock[]);
+    if(!je.error)setJournalEntries((je.data||[]) as JournalEntry[]);
     if(!ss.error){const next:any={};(ss.data||[]).forEach((x:any)=>next[x.key]=x.value);setSettings(next)}
     setRefreshing(false);
   }
@@ -131,7 +134,7 @@ export default function Admin(){
       {tab==='orders'&&<Orders orders={orders} onRefresh={refresh} initialStatus={orderFilter}/>}
       {tab==='customers'&&<Customers customers={customers} orders={orders}/>}
       {tab==='discounts'&&<Discounts discounts={discounts} refresh={refresh}/>}
-      {tab==='content'&&<ContentManager blocks={content} refresh={refresh}/>}
+      {tab==='content'&&<><ContentManager blocks={content} refresh={refresh}/><JournalManager entries={journalEntries} products={products} refresh={refresh}/></>}
       {tab==='settings'&&<SettingsManager settings={settings} refresh={refresh}/>}
       {tab==='reports'&&<Reports orders={orders} products={products}/>}
       {editing&&<ProductEditor product={editing} setProduct={setEditing} save={saveProduct} saving={saving}/>}
@@ -294,6 +297,14 @@ function Discounts({discounts,refresh}:{discounts:Discount[];refresh:()=>void}){
 
 function DiscountEditor({value,setValue,save,saving}:{value:Partial<Discount>;setValue:(v:Partial<Discount>|null)=>void;save:(e:FormEvent)=>void;saving:boolean}){const f=(k:keyof Discount)=>(e:any)=>setValue({...value,[k]:e.target.type==='checkbox'?e.target.checked:e.target.value});return <div className="admin-modal-backdrop"><form className="admin-editor compact" onSubmit={save}><button type="button" className="admin-close" onClick={()=>setValue(null)}><X size={18}/></button><p className="eyebrow">MARKETING / DISCOUNT</p><h2>{value.id?'Edit code':'New code'}</h2><label>Code<input required value={value.code||''} onChange={f('code')}/></label><label>Type<select value={value.kind||'percentage'} onChange={f('kind')}><option value="percentage">Percentage</option><option value="fixed">مبلغ ثابت (تومان)</option></select></label><label>Value<input required type="number" min="0" value={value.value??0} onChange={f('value')}/></label><label>Usage limit<input type="number" min="0" value={value.usage_limit??''} onChange={f('usage_limit')} placeholder="Unlimited"/></label><label className="admin-check"><input type="checkbox" checked={value.active!==false} onChange={f('active')}/> Active</label><button className="admin-primary" disabled={saving}><Save size={15}/> {saving?'Saving…':'Save discount'}</button></form></div>}
 
+function JournalManager({entries,products,refresh}:{entries:JournalEntry[];products:DbProduct[];refresh:()=>void}){
+ const [editing,setEditing]=useState<Partial<JournalEntry>|null>(null);
+ const sections=[['uniform','یونیفرم جدید'],['atelier','درون آتلیه'],['after-dark','After Dark']] as const;
+ async function save(e:FormEvent){e.preventDefault();if(!editing)return;const payload={section:editing.section||'uniform',title:editing.title||'',summary:editing.summary||'',body:editing.body||'',image:editing.image||'',product_ids:editing.product_ids||[],active:editing.active!==false,sort_order:Number(editing.sort_order)||0};const r=editing.id?await supabase.from('journal_entries').update(payload).eq('id',editing.id):await supabase.from('journal_entries').insert(payload);if(r.error)alert(r.error.message);else{setEditing(null);refresh()}}
+ async function remove(id:string){if(!confirm('Delete this journal entry?'))return;const r=await supabase.from('journal_entries').delete().eq('id',id);if(r.error)alert(r.error.message);else refresh()}
+ return <section className="admin-panel"><div className="admin-panel-head"><div><h2>Journal</h2><p className="admin-muted">Add stories and assign products to each journal section.</p></div><button className="admin-primary small" onClick={()=>setEditing({section:'uniform',title:'',summary:'',body:'',image:'',product_ids:[],active:true,sort_order:0})}><Plus size={15}/> Add journal entry</button></div>{sections.map(([section,label])=><div key={section} className="admin-journal-section"><h3>{label}</h3>{entries.filter(e=>e.section===section).map(entry=><div className="admin-row content-row" key={entry.id}><span><b>{entry.title}</b><small>{entry.product_ids?.length||0} products</small></span><span className={'status-pill '+(entry.active?'status-active':'status-hidden')}>{entry.active?'Published':'Hidden'}</span><div><button className="icon-btn" onClick={()=>setEditing(entry)}><Save size={15}/></button><button className="icon-btn danger" onClick={()=>remove(entry.id)}><Trash2 size={15}/></button></div></div>)}</div>)}{editing&&<JournalEditor value={editing} setValue={setEditing} save={save} products={products}/>}</section>;
+}
+function JournalEditor({value,setValue,save,products}:{value:Partial<JournalEntry>;setValue:(v:Partial<JournalEntry>|null)=>void;save:(e:FormEvent)=>void;products:DbProduct[]}){const f=(k:keyof JournalEntry)=>(e:any)=>setValue({...value,[k]:e.target.type==='checkbox'?e.target.checked:e.target.value});const ids=value.product_ids||[];return <div className="admin-modal-backdrop"><form className="admin-editor" onSubmit={save}><button type="button" className="admin-close" onClick={()=>setValue(null)}><X size={18}/></button><p className="eyebrow">JOURNAL / EDITOR</p><h2>{value.id?'Edit entry':'New entry'}</h2><label>Section<select value={value.section||'uniform'} onChange={f('section')}><option value="uniform">یونیفرم جدید</option><option value="atelier">درون آتلیه</option><option value="after-dark">After Dark</option></select></label><label>Title<input required value={value.title||''} onChange={f('title')}/></label><label>Summary<input value={value.summary||''} onChange={f('summary')}/></label><label>Body<textarea value={value.body||''} onChange={f('body')}/></label><label>Image URL<input value={value.image||''} onChange={f('image')} placeholder="Optional"/></label><label>Order<input type="number" value={value.sort_order??0} onChange={f('sort_order')}/></label><div className="admin-checklist"><strong>Products in this journal entry</strong>{products.map(p=><label className="admin-check" key={p.id}><input type="checkbox" checked={ids.includes(p.id)} onChange={e=>setValue({...value,product_ids:e.target.checked?[...ids,p.id]:ids.filter(id=>id!==p.id)})}/>{p.name}</label>)}</div><label className="admin-check"><input type="checkbox" checked={value.active!==false} onChange={f('active')}/> Published</label><button className="admin-primary"><Save size={15}/> Save journal entry</button></form></div>}
 function ContentManager({blocks,refresh}:{blocks:ContentBlock[];refresh:()=>void}){
  const [editing,setEditing]=useState<Partial<ContentBlock>|null>(null);
  async function save(e:FormEvent){e.preventDefault();if(!editing)return;const payload={key:(editing.key||'').trim().toLowerCase().replace(/\s+/g,'-'),title:editing.title||'',body:editing.body||'',image:editing.image||'',active:editing.active!==false};const r=editing.id?await supabase.from('content_blocks').update(payload).eq('id',editing.id):await supabase.from('content_blocks').insert(payload);if(r.error)alert(r.error.message);else{setEditing(null);refresh()}}
